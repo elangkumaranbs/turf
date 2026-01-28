@@ -1,0 +1,78 @@
+[debug] [2026-01-28T09:50:30.642Z] ----------------------------------------------------------------------
+[debug] [2026-01-28T09:50:30.643Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\elang\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2026-01-28T09:50:30.644Z] CLI Version:   15.3.1
+[debug] [2026-01-28T09:50:30.644Z] Platform:      win32
+[debug] [2026-01-28T09:50:30.644Z] Node Version:  v24.12.0
+[debug] [2026-01-28T09:50:30.644Z] Time:          Wed Jan 28 2026 15:20:30 GMT+0530 (India Standard Time)
+[debug] [2026-01-28T09:50:30.644Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-28T09:50:32.060Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-28T09:50:32.060Z] > authorizing via signed-in user (elangkumaranbs@gmail.com)
+[debug] [2026-01-28T09:50:32.060Z] [iam] checking project turf-3cb76 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-28T09:50:32.061Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:32.061Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:32.061Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/turf-3cb76:testIamPermissions [none]
+[debug] [2026-01-28T09:50:32.061Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/turf-3cb76:testIamPermissions x-goog-quota-user=projects/turf-3cb76
+[debug] [2026-01-28T09:50:32.061Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/turf-3cb76:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T09:50:33.367Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/turf-3cb76:testIamPermissions 200
+[debug] [2026-01-28T09:50:33.367Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/turf-3cb76:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-28T09:50:33.367Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:33.368Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:33.368Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/turf-3cb76 [none]
+[debug] [2026-01-28T09:50:33.749Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/turf-3cb76 200
+[debug] [2026-01-28T09:50:33.750Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/turf-3cb76 {"projectId":"turf-3cb76","projectNumber":"443588724592","displayName":"turf","name":"projects/turf-3cb76","resources":{"hostingSite":"turf-3cb76"},"state":"ACTIVE","etag":"1_19f1be77-c09e-4b64-bf43-929d46a29d5a"}
+[debug] [2026-01-28T09:50:35.211Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:35.211Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:35.212Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites pageToken=&pageSize=10
+[debug] [2026-01-28T09:50:36.869Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites 200
+[debug] [2026-01-28T09:50:36.869Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites {"sites":[{"name":"projects/turf-3cb76/sites/turf-3cb76","defaultUrl":"https://turf-3cb76.web.app","appId":"1:443588724592:web:ddd04fd960a4ba371871b5","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-28T09:50:36.869Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:36.869Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:36.869Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:443588724592:web:ddd04fd960a4ba371871b5/config [none]
+[debug] [2026-01-28T09:50:37.513Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:443588724592:web:ddd04fd960a4ba371871b5/config 200
+[debug] [2026-01-28T09:50:37.513Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:443588724592:web:ddd04fd960a4ba371871b5/config {"projectId":"turf-3cb76","appId":"1:443588724592:web:ddd04fd960a4ba371871b5","storageBucket":"turf-3cb76.firebasestorage.app","apiKey":"AIzaSyCc86rUYi9EWCY0xd8Xyp81gZAkZzXE9wY","authDomain":"turf-3cb76.firebaseapp.com","messagingSenderId":"443588724592","measurementId":"G-1RX880VHCW","projectNumber":"443588724592","version":"2"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2026-01-28T09:50:40.367Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:40.367Z] Checked if tokens are valid: true, expires at: 1769596973691
+[debug] [2026-01-28T09:50:40.367Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites/turf-3cb76 [none]
+[debug] [2026-01-28T09:50:40.749Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites/turf-3cb76 200
+[debug] [2026-01-28T09:50:40.749Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/turf-3cb76/sites/turf-3cb76 {"name":"projects/turf-3cb76/sites/turf-3cb76","defaultUrl":"https://turf-3cb76.web.app","appId":"1:443588724592:web:ddd04fd960a4ba371871b5","type":"DEFAULT_SITE"}
+[info] ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\elang\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\elang\Downloads\Turf\package-lock.json
+
+
+[info] ▲ Next.js 16.1.5 (Turbopack)
+
+
+[info]   Creating an optimized production build ...
+
+[info] ✓ Compiled successfully in 1890.8ms
+
+[info]   Running TypeScript ...
+
+[info]   Collecting page data using 27 workers ...
+
+[info] 
+
+[info] > Build error occurred
+
+[info] Error: Page "/turfs/[id]" is missing "generateStaticParams()" so it cannot be used with "output: export" config.
+    at ignore-listed frames
+
+[debug] [2026-01-28T09:50:47.078Z] Error: ENOENT: no such file or directory, open 'C:\Users\elang\Downloads\Turf\.next\export-marker.json'
+[error] 
+[error] Error: An unexpected error has occurred.
