@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 
 export default function OwnerBookingsPage() {
     const { user } = useAuth();
-    const [bookings, setBookings] = useState<(Booking & { turfName?: string })[]>([]);
+    const [bookings, setBookings] = useState<(Booking & { turfName?: string; city?: string; location?: string })[]>([]);
     const [turfs, setTurfs] = useState<Turf[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterTurf, setFilterTurf] = useState('all');
@@ -122,6 +122,12 @@ export default function OwnerBookingsPage() {
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                                        {booking.city && (
+                                            <span className="flex items-center gap-1">
+                                                <MapPin size={14} className="text-[var(--turf-green)]" />
+                                                {booking.city}
+                                            </span>
+                                        )}
                                         <span className="flex items-center gap-1">
                                             <CalendarDays size={14} className="text-[var(--turf-green)]" />
                                             {format(new Date(booking.date), 'MMM d, yyyy')}

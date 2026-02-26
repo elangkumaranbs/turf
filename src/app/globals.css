@@ -11,11 +11,36 @@
   --turf-green-hover: #27ae60;
 }
 
+/* Light Mode */
+.light {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --turf-green: #2ecc71;
+  --turf-green-hover: #27ae60;
+}
+
+.light body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.light .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.light .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-sans), sans-serif;
   overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Glassmorphism Utilities */
@@ -42,10 +67,30 @@ body {
 ::-webkit-scrollbar-track {
   background: #0a0a0a;
 }
+.light ::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
 ::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 4px;
 }
+.light ::-webkit-scrollbar-thumb {
+  background: #999;
+}
 ::-webkit-scrollbar-thumb:hover {
   background: var(--turf-green);
+}
+
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { getTurfs, Turf } from '@/lib/firebase/firestore';
 import { MapPin, ArrowRight, Search, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
 import Image from 'next/image';
+import { SkeletonCard } from '@/components/ui/SkeletonLoader';
 
 type SortOption = 'default' | 'price-low' | 'price-high' | 'name-az' | 'name-za';
 
@@ -157,8 +158,8 @@ export default function TurfsPage() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                        {[1, 2, 3].map(i => (
-                            <GlassCard key={i} className="h-96 animate-pulse bg-white/5" />
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <SkeletonCard key={i} />
                         ))}
                     </div>
                 ) : filteredTurfs.length === 0 ? (

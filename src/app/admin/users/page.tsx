@@ -128,12 +128,12 @@ export default function ManageUsersPage() {
     };
 
     const handleDeleteUser = async (userId: string, userName: string) => {
-        if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
+        if (!confirm(`⚠️ Are you sure you want to delete ${userName}?\n\nThis will permanently delete:\n• User account\n• All their bookings\n• All their turfs (if owner)\n\nThis action cannot be undone!`)) return;
         setActionLoading(userId);
         try {
             await deleteUserDocument(userId);
             setUsers(users.filter(u => u.uid !== userId));
-            alert('User deleted successfully!');
+            alert('✅ User and all associated data deleted successfully!');
         } catch (error: any) {
             console.error('Error deleting user:', error);
             alert(`Failed to delete user: ${error.message}`);

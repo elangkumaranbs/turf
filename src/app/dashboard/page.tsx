@@ -8,6 +8,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { getBookingsByUser, Booking, getTurfById } from '@/lib/firebase/firestore';
 import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, DollarSign, CalendarCheck, Star } from 'lucide-react';
 import { format } from 'date-fns';
+import { SkeletonStats, SkeletonBooking } from '@/components/ui/SkeletonLoader';
 
 export default function DashboardPage() {
     const { user, loading: authLoading, logout } = useAuth();
@@ -31,12 +32,25 @@ export default function DashboardPage() {
                 const enrichedBookings = await Promise.all(
                     userBookings.map(async (booking) => {
                         const turf = await getTurfById(booking.turfId);
+                        
+                        // Build location string with proper fallbacks
+                        let location = 'Location not available';
+                        if (turf) {
+                            if (turf.city && turf.address) {
+                                location = `${turf.address}, ${turf.city}`;
+                            } else if (turf.city) {
+                                location = turf.city;
+                            } else if (turf.address) {
+                                location = turf.address;
+                            } else if (turf.location) {
+                                location = turf.location;
+                            }
+                        }
+                        
                         return {
                             ...booking,
                             turfName: turf?.name || 'Unknown Turf',
-                            location: turf?.address && turf?.city
-                                ? `${turf.address}, ${turf.city}`
-                                : turf?.location || 'Unknown Location'
+                            location
                         };
                     })
                 );
@@ -53,8 +67,32 @@ export default function DashboardPage() {
 
     if (authLoading || loading) {
         return (
-            <main className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-                <Loader2 className="animate-spin text-[var(--turf-green)] w-10 h-10" />
+            <main className="min-h-screen bg-[#0a0a0a] pb-12">
+                <Navbar />
+                <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 sm:mb-8">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Dashboard</h1>
+                            <p className="text-sm sm:text-base text-gray-400 mt-1">Loading...</p>
+                        </div>
+                    </div>
+                    
+                    {/* Stats Grid Skeleton */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                        {[1, 2, 3, 4].map(i => <SkeletonStats key={i} />)}
+                    </div>
+                    
+                    {/* Bookings Skeleton */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                        <div className="lg:col-span-1">
+                            <SkeletonStats />
+                        </div>
+                        <div className="lg:col-span-2 space-y-4">
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">Recent Bookings</h2>
+                            {[1, 2, 3].map(i => <SkeletonBooking key={i} />)}
+                        </div>
+                    </div>
+                </div>
             </main>
         );
     }
@@ -77,7 +115,7 @@ export default function DashboardPage() {
 
     // Find most visited location
     const locationCounts = bookings.reduce((acc, booking) => {
-        const loc = booking.location || 'Unknown';
+        const loc = booking.location || 'Location not available';
         acc[loc] = (acc[loc] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);

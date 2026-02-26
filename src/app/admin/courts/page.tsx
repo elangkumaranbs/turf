@@ -77,12 +77,12 @@ export default function AdminCourtsPage() {
     }, []);
 
     const handleDelete = async (turfId: string) => {
-        if (!confirm('Are you sure you want to delete this court? This action cannot be undone.')) return;
+        if (!confirm('⚠️ Are you sure you want to delete this court?\n\nThis will permanently delete:\n• The court/turf\n• All bookings for this court\n\nThis action cannot be undone!')) return;
         setActionLoading(turfId);
         try {
             await deleteTurf(turfId);
             setTurfs(turfs.filter(t => t.id !== turfId));
-            alert('Court deleted successfully!');
+            alert('✅ Court and all associated bookings deleted successfully!');
         } catch (error) {
             alert(`Failed to delete court: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {

@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Button } from './ui/Button';
-import { Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Navbar = () => {
     const { user, loading, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -37,8 +40,20 @@ export const Navbar = () => {
         >
             <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="text-xl sm:text-2xl font-bold font-sans tracking-tight">
-                    Turf<span className="text-[var(--turf-green)]">GameDen</span>
+                <Link href="/" className="flex items-center gap-2 group">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16">
+                        <Image 
+                            src="/location type logo 001.png" 
+                            alt="TurfGameDen Logo" 
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-contain transition-transform group-hover:scale-105"
+                            priority
+                        />
+                    </div>
+                    <span className="text-xl sm:text-2xl font-bold font-sans tracking-tight hidden sm:inline">
+                        Turf<span className="text-[var(--turf-green)]">GameDen</span>
+                    </span>
                 </Link>
 
                 {/* Desktop Menu */}
@@ -56,8 +71,17 @@ export const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Auth / Mobile Toggle */}
+                {/* Theme Toggle & Auth */}
                 <div className="flex items-center space-x-2 sm:space-x-4">
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        aria-label="Toggle theme"
+                    >
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+
                     {!loading && (
                         <div className="hidden md:block">
                             {user ? (

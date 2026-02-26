@@ -6,12 +6,13 @@ import { getOwnerStats, OwnerStats, getBookingsByOwner, Booking, getTurfsByAdmin
 import { GlassCard } from '@/components/ui/GlassCard';
 import { MapPin, CalendarDays, TrendingUp, PlusCircle, ArrowRight, DollarSign, Calendar, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { SkeletonStats } from '@/components/ui/SkeletonLoader';
 
 export default function OwnerDashboardPage() {
     const { user } = useAuth();
     const [stats, setStats] = useState<OwnerStats | null>(null);
     const [loading, setLoading] = useState(true);
-    const [bookings, setBookings] = useState<(Booking & { turfName?: string })[]>([]);
+    const [bookings, setBookings] = useState<(Booking & { turfName?: string; city?: string; location?: string })[]>([]);
     const [turfs, setTurfs] = useState<Turf[]>([]);
 
     useEffect(() => {
@@ -145,24 +146,30 @@ export default function OwnerDashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {statCards.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                        <GlassCard key={card.label} className={`p-6 border ${card.border}`}>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-3 rounded-xl ${card.bg}`}>
-                                    <Icon size={22} className={card.color} />
+            {loading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => <SkeletonStats key={i} />)}
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {statCards.map((card) => {
+                        const Icon = card.icon;
+                        return (
+                            <GlassCard key={card.label} className={`p-6 border ${card.border}`}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-3 rounded-xl ${card.bg}`}>
+                                        <Icon size={22} className={card.color} />
+                                    </div>
                                 </div>
-                            </div>
-                            <p className="text-sm text-gray-400">{card.label}</p>
-                            <p className={`text-2xl sm:text-3xl font-bold mt-1 ${card.color}`}>
-                                {card.value}
-                            </p>
-                        </GlassCard>
-                    );
-                })}
-            </div>
+                                <p className="text-sm text-gray-400">{card.label}</p>
+                                <p className={`text-2xl sm:text-3xl font-bold mt-1 ${card.color}`}>
+                                    {card.value}
+                                </p>
+                            </GlassCard>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">

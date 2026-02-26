@@ -145,7 +145,19 @@ export const updateTurf = async (turfId: string, data: Partial<Omit<Turf, 'id' |
 
 export const deleteTurf = async (turfId: string): Promise<void> => {
     try {
+        // 1. Delete all bookings for this turf
+        const bookingsCol = collection(db, 'bookings');
+        const bookingsQuery = query(bookingsCol, where("turfId", "==", turfId));
+        const bookingsSnapshot = await getDocs(bookingsQuery);
+        const bookingDeletePromises = bookingsSnapshot.docs.map(bookingDoc => 
+            deleteDoc(doc(db, 'bookings', bookingDoc.id))
+        );
+        await Promise.all(bookingDeletePromises);
+
+        // 2. Delete the turf itself
         await deleteDoc(doc(db, 'turfs', turfId));
+        
+        console.log(`Cascade deleted turf ${turfId} with ${bookingsSnapshot.size} bookings`);
     } catch (error) {
         console.error("Error deleting turf:", error);
         throw error;
@@ -208,17 +220,23 @@ export const getAllBookings = async (): Promise<Booking[]> => {
 };
 
 // Get all bookings across an owner's turfs
-export const getBookingsByOwner = async (ownerId: string): Promise<(Booking & { turfName?: string })[]> => {
+export const getBookingsByOwner = async (ownerId: string): Promise<(Booking & { turfName?: string; city?: string; location?: string })[]> => {
     try {
         // First, get all turfs owned by this owner
         const ownerTurfs = await getTurfsByAdmin(ownerId);
         if (ownerTurfs.length === 0) return [];
 
-        const turfMap = new Map(ownerTurfs.map(t => [t.id, t.name]));
+        // Create maps for turf data
+        const turfDataMap = new Map(ownerTurfs.map(t => [t.id, {
+            name: t.name,
+            city: t.city,
+            address: t.address,
+            location: t.location
+        }]));
         const turfIds = ownerTurfs.map(t => t.id);
 
         // Firestore 'in' queries support max 30 values, chunk if needed
-        const allBookings: (Booking & { turfName?: string })[] = [];
+        const allBookings: (Booking & { turfName?: string; city?: string; location?: string })[] = [];
         const chunks = [];
         for (let i = 0; i < turfIds.length; i += 30) {
             chunks.push(turfIds.slice(i, i + 30));
@@ -230,11 +248,29 @@ export const getBookingsByOwner = async (ownerId: string): Promise<(Booking & { 
             const snapshot = await getDocs(q);
             const bookings = snapshot.docs.map(doc => {
                 const data = doc.data();
+                const turfData = turfDataMap.get(data.turfId);
+                
+                // Build location string
+                let locationStr = 'Location not available';
+                if (turfData) {
+                    if (turfData.city && turfData.address) {
+                        locationStr = `${turfData.address}, ${turfData.city}`;
+                    } else if (turfData.city) {
+                        locationStr = turfData.city;
+                    } else if (turfData.address) {
+                        locationStr = turfData.address;
+                    } else if (turfData.location) {
+                        locationStr = turfData.location;
+                    }
+                }
+                
                 return {
                     id: doc.id,
                     ...data,
-                    turfName: turfMap.get(data.turfId) || 'Unknown'
-                } as Booking & { turfName?: string };
+                    turfName: turfData?.name || 'Unknown',
+                    city: turfData?.city,
+                    location: locationStr
+                } as Booking & { turfName?: string; city?: string; location?: string };
             });
             allBookings.push(...bookings);
         }
@@ -344,11 +380,46 @@ export const createUserDocument = async (uid: string, userData: {
     }
 };
 
-// Delete user document from Firestore
+// Delete user document from Firestore and cascade delete all related data
 export const deleteUserDocument = async (userId: string): Promise<void> => {
     try {
+        // 1. Delete all bookings by this user
+        const bookingsCol = collection(db, 'bookings');
+        const userBookingsQuery = query(bookingsCol, where("userId", "==", userId));
+        const userBookingsSnapshot = await getDocs(userBookingsQuery);
+        const userBookingDeletePromises = userBookingsSnapshot.docs.map(bookingDoc => 
+            deleteDoc(doc(db, 'bookings', bookingDoc.id))
+        );
+        await Promise.all(userBookingDeletePromises);
+
+        // 2. Get all turfs owned by this user
+        const turfsCol = collection(db, 'turfs');
+        const turfsQuery = query(turfsCol, where("adminId", "==", userId));
+        const turfsSnapshot = await getDocs(turfsQuery);
+        
+        // 3. For each turf, delete all bookings for that turf
+        let turfBookingsDeleted = 0;
+        for (const turfDoc of turfsSnapshot.docs) {
+            const turfBookingsQuery = query(bookingsCol, where("turfId", "==", turfDoc.id));
+            const turfBookingsSnapshot = await getDocs(turfBookingsQuery);
+            const turfBookingDeletePromises = turfBookingsSnapshot.docs.map(bookingDoc => 
+                deleteDoc(doc(db, 'bookings', bookingDoc.id))
+            );
+            await Promise.all(turfBookingDeletePromises);
+            turfBookingsDeleted += turfBookingsSnapshot.size;
+        }
+        
+        // 4. Delete all turfs owned by this user
+        const turfDeletePromises = turfsSnapshot.docs.map(turfDoc => 
+            deleteDoc(doc(db, 'turfs', turfDoc.id))
+        );
+        await Promise.all(turfDeletePromises);
+
+        // 5. Delete the user document itself
         const userRef = doc(db, 'users', userId);
         await deleteDoc(userRef);
+        
+        console.log(`Cascade deleted user ${userId}: ${userBookingsSnapshot.size} user bookings, ${turfsSnapshot.size} turfs, ${turfBookingsDeleted} turf bookings`);
     } catch (error) {
         console.error("Error deleting user document:", error);
         throw error;
