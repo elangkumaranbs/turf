@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { getBookingsByUser, Booking, getTurfById } from '@/lib/firebase/firestore';
-import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, DollarSign, CalendarCheck, Star } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function DashboardPage() {
@@ -59,6 +59,66 @@ export default function DashboardPage() {
         );
     }
 
+    // Calculate statistics
+    const totalSpent = bookings.reduce((sum, booking) => {
+        // Estimate based on 1 hour per time slot at average price
+        return sum + (booking.times?.length || 1) * 1000; // Rough estimate
+    }, 0);
+
+    const today = new Date();
+    const upcomingBookings = bookings.filter(b => new Date(b.date) >= today);
+    const pastBookings = bookings.filter(b => new Date(b.date) < today);
+    
+    const thisMonthBookings = bookings.filter(b => {
+        const bookingDate = new Date(b.date);
+        return bookingDate.getMonth() === today.getMonth() && 
+               bookingDate.getFullYear() === today.getFullYear();
+    });
+
+    // Find most visited location
+    const locationCounts = bookings.reduce((acc, booking) => {
+        const loc = booking.location || 'Unknown';
+        acc[loc] = (acc[loc] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+    
+    const mostVisited = Object.entries(locationCounts).sort((a, b) => b[1] - a[1])[0];
+
+    const statCards = [
+        {
+            label: 'Total Bookings',
+            value: bookings.length,
+            icon: Calendar,
+            color: 'text-[var(--turf-green)]',
+            bg: 'bg-[var(--turf-green)]/10',
+            border: 'border-[var(--turf-green)]/20',
+        },
+        {
+            label: 'Upcoming',
+            value: upcomingBookings.length,
+            icon: CalendarCheck,
+            color: 'text-blue-400',
+            bg: 'bg-blue-500/10',
+            border: 'border-blue-500/20',
+        },
+        {
+            label: 'This Month',
+            value: thisMonthBookings.length,
+            icon: TrendingUp,
+            color: 'text-purple-400',
+            bg: 'bg-purple-500/10',
+            border: 'border-purple-500/20',
+        },
+        {
+            label: 'Est. Total Spent',
+            value: `₹${totalSpent.toLocaleString('en-IN')}`,
+            icon: DollarSign,
+            color: 'text-orange-400',
+            bg: 'bg-orange-500/10',
+            border: 'border-orange-500/20',
+        },
+    ];
+
     return (
         <main className="min-h-screen bg-[#0a0a0a] pb-12">
             <Navbar />
@@ -68,10 +128,26 @@ export default function DashboardPage() {
                         <h1 className="text-2xl sm:text-3xl font-bold text-white">My Dashboard</h1>
                         <p className="text-sm sm:text-base text-gray-400 mt-1">Welcome back, {user?.displayName || 'Player'}</p>
                     </div>
-                    <div className="text-left sm:text-right">
-                        <p className="text-xs sm:text-sm text-gray-400">Total Bookings</p>
-                        <p className="text-xl sm:text-2xl font-bold text-[var(--turf-green)]">{bookings.length}</p>
-                    </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                    {statCards.map((card) => {
+                        const Icon = card.icon;
+                        return (
+                            <GlassCard key={card.label} className={`p-4 sm:p-5 border ${card.border}`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`p-2 sm:p-2.5 rounded-xl ${card.bg}`}>
+                                        <Icon size={18} className={card.color} />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-400 mb-1">{card.label}</p>
+                                <p className={`text-xl sm:text-2xl font-bold ${card.color}`}>
+                                    {card.value}
+                                </p>
+                            </GlassCard>
+                        );
+                    })}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -100,6 +176,25 @@ export default function DashboardPage() {
                                 Log Out
                             </button>
                         </GlassCard>
+
+                        {/* Most Visited Location */}
+                        {mostVisited && (
+                            <GlassCard className="p-4 sm:p-6 border-white/10">
+                                <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                                    <Star className="w-5 h-5 text-yellow-400" />
+                                    Most Visited
+                                </h3>
+                                <div className="space-y-2">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="w-4 h-4 text-[var(--turf-green)] mt-1 shrink-0" />
+                                        <div>
+                                            <p className="text-sm text-white font-medium">{mostVisited[0]}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{mostVisited[1]} booking{mostVisited[1] > 1 ? 's' : ''}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </GlassCard>
+                        )}
 
                         {/* Admin Actions - Visible to Admins (or all for demo simplicity if needed, but keeping logic strict) */}
                         {(user?.role === 'turf_admin' || user?.role === 'super_admin') && (

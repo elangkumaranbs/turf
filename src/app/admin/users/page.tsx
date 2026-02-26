@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { getAllUsers, updateUserRole, createUserDocument, deleteUserDocument, updateUserProfile } from '@/lib/firebase/firestore';
-import { Loader2, Shield, ShieldCheck, ShieldX, Users, Search, CheckCircle, XCircle, Clock, UserPlus, Pencil, Trash2, X } from 'lucide-react';
+import { Loader2, Shield, ShieldCheck, ShieldX, Users, Search, CheckCircle, XCircle, Clock, UserPlus, Pencil, Trash2, X, ArrowLeft } from 'lucide-react';
 import { useAuth, SUPER_ADMIN_EMAIL } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -199,7 +199,14 @@ export default function ManageUsersPage() {
         <div className="space-y-6">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
+                <div className="flex-1">
+                    <button
+                        onClick={() => router.back()}
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors group"
+                    >
+                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-sm font-medium">Back</span>
+                    </button>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30">
                             <Users className="w-6 h-6 text-purple-400" />

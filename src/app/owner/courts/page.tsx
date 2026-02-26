@@ -10,6 +10,7 @@ import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock } f
 import Link from 'next/link';
 import Image from 'next/image';
 import { Select } from '@/components/ui/Select';
+import { formatTime12Hour } from '@/lib/utils';
 
 const CITY_OPTIONS = [
     { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
@@ -230,10 +231,7 @@ export default function MyCourtsPage() {
                                             <h3 className="text-xl font-bold text-white mb-1">{turf.name}</h3>
                                             <div className="flex items-center text-gray-400 text-sm mb-3">
                                                 <MapPin size={14} className="mr-1 text-[var(--turf-green)]" />
-                                                {turf.address && turf.city
-                                                    ? `${turf.address}, ${turf.city}`
-                                                    : turf.location || 'Location not specified'
-                                                }
+                                                {[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}
                                             </div>
                                             <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
                                                 <span className="flex items-center gap-1">
@@ -243,7 +241,7 @@ export default function MyCourtsPage() {
                                                 {turf.operatingHours && (
                                                     <span className="flex items-center gap-1">
                                                         <Clock size={14} className="text-[var(--turf-green)]" />
-                                                        {turf.operatingHours.open} – {turf.operatingHours.close}
+                                                        {formatTime12Hour(turf.operatingHours.open)} – {formatTime12Hour(turf.operatingHours.close)}
                                                     </span>
                                                 )}
                                                 <span className="capitalize px-2 py-0.5 rounded bg-white/5 text-gray-300 text-xs">

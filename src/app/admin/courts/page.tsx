@@ -7,9 +7,10 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, User, Building2, Search } from 'lucide-react';
+import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, User, Building2, Search, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { formatTime12Hour } from '@/lib/utils';
 
 const CITY_OPTIONS = [
     { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
@@ -201,7 +202,14 @@ export default function AdminCourtsPage() {
         <div className="space-y-6">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
+                <div className="flex-1">
+                    <button
+                        onClick={() => router.back()}
+                        className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors group"
+                    >
+                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-sm font-medium">Back</span>
+                    </button>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30">
                             <Building2 className="w-6 h-6 text-orange-400" />
@@ -420,10 +428,7 @@ export default function AdminCourtsPage() {
                                                 <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{turf.name}</h3>
                                                 <div className="flex items-start text-gray-400 text-sm">
                                                     <MapPin size={16} className="mr-2 text-orange-400 mt-0.5 flex-shrink-0" />
-                                                    <span className="leading-relaxed">{turf.address && turf.city
-                                                        ? `${turf.address}, ${turf.city}`
-                                                        : turf.location || 'Location not specified'
-                                                    }</span>
+                                                    <span className="leading-relaxed">{[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}</span>
                                                 </div>
                                             </div>
                                             
@@ -445,7 +450,7 @@ export default function AdminCourtsPage() {
                                                 {turf.operatingHours && (
                                                     <div className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                                                         <Clock size={16} className="text-purple-400" />
-                                                        <span className="text-white text-sm font-medium">{turf.operatingHours.open} – {turf.operatingHours.close}</span>
+                                                        <span className="text-white text-sm font-medium">{formatTime12Hour(turf.operatingHours.open)} – {formatTime12Hour(turf.operatingHours.close)}</span>
                                                     </div>
                                                 )}
                                                 <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg">

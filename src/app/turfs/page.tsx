@@ -37,7 +37,7 @@ export default function TurfsPage() {
     const filteredTurfs = useMemo(() => {
         let result = turfs.filter((turf) => {
             const query = searchQuery.toLowerCase();
-            const displayLocation = turf.address && turf.city ? `${turf.address}, ${turf.city}` : turf.location || '';
+            const displayLocation = [turf.address, turf.city].filter(Boolean).join(', ') || turf.location || '';
             const matchesSearch = turf.name.toLowerCase().includes(query) || displayLocation.toLowerCase().includes(query);
             const turfCity = turf.city || turf.location || '';
             const matchesLocation = selectedLocation === 'all' || turfCity === selectedLocation;
@@ -105,9 +105,9 @@ export default function TurfsPage() {
                                     onChange={(e) => setSelectedLocation(e.target.value)}
                                     className="h-11 sm:h-12 w-full appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-8 sm:pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer sm:min-w-[180px]"
                                 >
-                                    <option value="all" className="bg-[#1a1a1a]">All Locations</option>
+                                    <option value="all" className="bg-[#1a1a1a] text-white">All Locations</option>
                                     {locations.map(loc => (
-                                        <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>
+                                        <option key={loc} value={loc} className="bg-[#1a1a1a] text-white">{loc}</option>
                                     ))}
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -121,11 +121,11 @@ export default function TurfsPage() {
                                     onChange={(e) => setSortBy(e.target.value as SortOption)}
                                     className="h-11 sm:h-12 w-full appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-8 sm:pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer sm:min-w-[180px]"
                                 >
-                                    <option value="default" className="bg-[#1a1a1a]">Sort By</option>
-                                    <option value="price-low" className="bg-[#1a1a1a]">Price: Low → High</option>
-                                    <option value="price-high" className="bg-[#1a1a1a]">Price: High → Low</option>
-                                    <option value="name-az" className="bg-[#1a1a1a]">Name: A → Z</option>
-                                    <option value="name-za" className="bg-[#1a1a1a]">Name: Z → A</option>
+                                    <option value="default" className="bg-[#1a1a1a] text-white">Sort By</option>
+                                    <option value="price-low" className="bg-[#1a1a1a] text-white">Price: Low → High</option>
+                                    <option value="price-high" className="bg-[#1a1a1a] text-white">Price: High → Low</option>
+                                    <option value="name-az" className="bg-[#1a1a1a] text-white">Name: A → Z</option>
+                                    <option value="name-za" className="bg-[#1a1a1a] text-white">Name: Z → A</option>
                                 </select>
                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             </div>
@@ -193,10 +193,7 @@ export default function TurfsPage() {
                                         <h2 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-[var(--turf-green)] transition-colors">{turf.name}</h2>
                                         <div className="flex items-center text-gray-400 text-sm">
                                             <MapPin className="w-4 h-4 mr-1 text-[var(--turf-green)]" />
-                                            {turf.address && turf.city
-                                                ? `${turf.address}, ${turf.city}`
-                                                : turf.location || 'Location not specified'
-                                            }
+                                            {[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}
                                         </div>
                                     </div>
 

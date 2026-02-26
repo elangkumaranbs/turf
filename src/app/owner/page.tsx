@@ -2,28 +2,122 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getOwnerStats, OwnerStats } from '@/lib/firebase/firestore';
+import { getOwnerStats, OwnerStats, getBookingsByOwner, Booking, getTurfsByAdmin, Turf } from '@/lib/firebase/firestore';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { MapPin, CalendarDays, CheckCircle, TrendingUp, PlusCircle, ArrowRight } from 'lucide-react';
+import { MapPin, CalendarDays, TrendingUp, PlusCircle, ArrowRight, DollarSign, Calendar, Activity } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OwnerDashboardPage() {
     const { user } = useAuth();
     const [stats, setStats] = useState<OwnerStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [bookings, setBookings] = useState<(Booking & { turfName?: string })[]>([]);
+    const [turfs, setTurfs] = useState<Turf[]>([]);
 
     useEffect(() => {
         const fetchStats = async () => {
             if (user) {
                 const data = await getOwnerStats(user.uid);
                 setStats(data);
+                
+                // Fetch bookings for revenue calculation
+                const ownerBookings = await getBookingsByOwner(user.uid);
+                setBookings(ownerBookings);
+                
+                // Fetch turfs for price data
+                const ownerTurfs = await getTurfsByAdmin(user.uid);
+                setTurfs(ownerTurfs);
+                
                 setLoading(false);
             }
         };
         fetchStats();
     }, [user]);
 
+    // Calculate earnings
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const getStartOfWeek = () => {
+        const date = new Date();
+        const day = date.getDay();
+        const diff = date.getDate() - day;
+        return new Date(date.setDate(diff));
+    };
+    
+    const getStartOfMonth = () => {
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    };
+
+    const calculateEarnings = (filterDate?: Date, isWeek?: boolean, isMonth?: boolean) => {
+        return bookings.reduce((total, booking) => {
+            const bookingDate = new Date(booking.date);
+            bookingDate.setHours(0, 0, 0, 0);
+            
+            let include = true;
+            if (filterDate && !isWeek && !isMonth) {
+                include = bookingDate.getTime() === filterDate.getTime();
+            } else if (isWeek) {
+                const weekStart = getStartOfWeek();
+                include = bookingDate >= weekStart;
+            } else if (isMonth) {
+                const monthStart = getStartOfMonth();
+                include = bookingDate >= monthStart;
+            }
+            
+            if (!include || booking.status === 'cancelled') return total;
+            
+            // Find turf price
+            const turf = turfs.find(t => t.id === booking.turfId);
+            const pricePerHour = turf?.pricePerHour || 1000;
+            const hours = (booking.times?.length || 1);
+            
+            return total + (pricePerHour * hours);
+        }, 0);
+    };
+
+    const dailyEarnings = calculateEarnings(today);
+    const weeklyEarnings = calculateEarnings(undefined, true);
+    const monthlyEarnings = calculateEarnings(undefined, false, true);
+    const todayBookings = bookings.filter(b => {
+        const bookingDate = new Date(b.date);
+        bookingDate.setHours(0, 0, 0, 0);
+        return bookingDate.getTime() === today.getTime();
+    }).length;
+
     const statCards = [
+        {
+            label: 'Daily Earnings',
+            value: loading ? '—' : `₹${dailyEarnings.toLocaleString('en-IN')}`,
+            icon: DollarSign,
+            color: 'text-emerald-400',
+            bg: 'bg-emerald-500/10',
+            border: 'border-emerald-500/20',
+        },
+        {
+            label: 'Weekly Earnings',
+            value: loading ? '—' : `₹${weeklyEarnings.toLocaleString('en-IN')}`,
+            icon: TrendingUp,
+            color: 'text-blue-400',
+            bg: 'bg-blue-500/10',
+            border: 'border-blue-500/20',
+        },
+        {
+            label: 'Monthly Earnings',
+            value: loading ? '—' : `₹${monthlyEarnings.toLocaleString('en-IN')}`,
+            icon: Activity,
+            color: 'text-purple-400',
+            bg: 'bg-purple-500/10',
+            border: 'border-purple-500/20',
+        },
+        {
+            label: 'Today\'s Bookings',
+            value: loading ? '—' : todayBookings,
+            icon: Calendar,
+            color: 'text-orange-400',
+            bg: 'bg-orange-500/10',
+            border: 'border-orange-500/20',
+        },
         {
             label: 'Total Courts',
             value: stats?.totalCourts ?? 0,
@@ -33,20 +127,12 @@ export default function OwnerDashboardPage() {
             border: 'border-[var(--turf-green)]/20',
         },
         {
-            label: 'Active Courts',
-            value: stats?.activeCourts ?? 0,
-            icon: CheckCircle,
-            color: 'text-emerald-400',
-            bg: 'bg-emerald-500/10',
-            border: 'border-emerald-500/20',
-        },
-        {
             label: 'Total Bookings',
             value: stats?.totalBookings ?? 0,
             icon: CalendarDays,
-            color: 'text-blue-400',
-            bg: 'bg-blue-500/10',
-            border: 'border-blue-500/20',
+            color: 'text-cyan-400',
+            bg: 'bg-cyan-500/10',
+            border: 'border-cyan-500/20',
         },
     ];
 
@@ -59,7 +145,7 @@ export default function OwnerDashboardPage() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     return (
@@ -68,11 +154,10 @@ export default function OwnerDashboardPage() {
                                 <div className={`p-3 rounded-xl ${card.bg}`}>
                                     <Icon size={22} className={card.color} />
                                 </div>
-                                <TrendingUp size={16} className="text-gray-600" />
                             </div>
                             <p className="text-sm text-gray-400">{card.label}</p>
-                            <p className={`text-3xl font-bold mt-1 ${card.color}`}>
-                                {loading ? '—' : card.value}
+                            <p className={`text-2xl sm:text-3xl font-bold mt-1 ${card.color}`}>
+                                {card.value}
                             </p>
                         </GlassCard>
                     );
