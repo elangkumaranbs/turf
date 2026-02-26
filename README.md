@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏏 TurfGameDen
 
-## Getting Started
+**Premium Cricket Turf Booking Platform**
 
-First, run the development server:
+Book premium cricket turfs across the city — practice, compete, and play under the lights.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?logo=firebase)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+
+---
+
+## ✨ Features
+
+### 🏟️ For Players
+- **Browse Turfs** — Explore available turfs with detailed info, pricing, and photos
+- **Smart Booking** — Pick your date, time slot, and court with an intuitive booking widget
+- **User Dashboard** — View and manage your upcoming and past bookings
+- **Authentication** — Secure login and signup with Firebase Auth
+
+### 👑 For Turf Owners
+- **Owner Dashboard** — Overview of bookings, revenue, and court utilization
+- **Court Management** — Add, edit, and manage courts with pricing and availability
+- **Booking Management** — Track and manage all incoming bookings
+- **Settings** — Configure turf details and preferences
+
+### 🛠️ Admin Panel
+- **Add Turfs** — Register new turfs to the platform
+- **Manage Bookings** — Oversee all bookings across the platform
+- **User Management** — View and manage registered users
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer        | Technology                        |
+|--------------|-----------------------------------|
+| Framework    | Next.js 16 (App Router)          |
+| Frontend     | React 19, TypeScript 5           |
+| Styling      | Tailwind CSS 4, Framer Motion    |
+| Backend      | Firebase (Auth, Firestore, Storage) |
+| Fonts        | Inter (Google Fonts)             |
+| Deployment   | Netlify                          |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/           # Login & Signup pages
+│   ├── admin/            # Admin panel (add turf, manage bookings, users)
+│   ├── dashboard/        # Player dashboard
+│   ├── owner/            # Owner dashboard, courts, bookings, settings
+│   ├── turfs/            # Browse & view turfs
+│   ├── layout.tsx        # Root layout with AuthProvider
+│   └── page.tsx          # Landing page
+├── components/
+│   ├── ui/               # Reusable UI components (Button, Input, Select, GlassCard)
+│   ├── BookingWidget.tsx  # Date & slot booking widget
+│   ├── Hero.tsx          # Landing page hero section
+│   ├── Navbar.tsx        # Navigation bar
+│   └── SlotPicker.tsx    # Time slot picker
+├── context/
+│   └── AuthContext.tsx   # Firebase auth context provider
+└── lib/
+    ├── firebase/         # Firebase config & Firestore helpers
+    └── utils.ts          # Utility functions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- **Node.js** 18+ 
+- **npm** or **yarn**
 
-To learn more about Next.js, take a look at the following resources:
+### Installation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Clone the repository
+git clone https://github.com/elangkumaranbs/turf.git
+cd turf
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Install dependencies
+npm install
 
-## Deploy on Vercel
+# Start the development server
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Available Scripts
+
+| Command         | Description                |
+|-----------------|----------------------------|
+| `npm run dev`   | Start dev server           |
+| `npm run build` | Build for production       |
+| `npm run start` | Start production server    |
+| `npm run lint`  | Run ESLint                 |
+
+---
+
+## 🔐 Firebase Setup
+
+This project uses Firebase for authentication, database, and storage. The Firebase config is located in `src/lib/firebase/config.ts`. To use your own Firebase project:
+
+1. Create a project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Authentication** (Email/Password)
+3. Create a **Firestore** database
+4. Enable **Storage**
+5. Replace the config values in `src/lib/firebase/config.ts`
+
+---
+
+## 📄 License
+
+This project is private and proprietary.
+
+---
+
+<p align="center">
+  Built with ❤️ by <a href="https://github.com/elangkumaranbs">elangkumaranbs</a>
+</p>
