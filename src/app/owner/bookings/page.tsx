@@ -128,7 +128,10 @@ export default function OwnerBookingsPage() {
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Clock size={14} className="text-[var(--turf-green)]" />
-                                            {booking.time} ({booking.duration} min)
+                                            {booking.times && booking.times.length > 0
+                                                ? booking.times.join(', ')
+                                                : booking.time || 'N/A'
+                                            } ({booking.duration} min)
                                         </span>
                                     </div>
                                 </div>

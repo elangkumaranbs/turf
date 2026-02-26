@@ -32,12 +32,12 @@ export const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/50 backdrop-blur-md py-4' : 'bg-transparent py-6'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/50 backdrop-blur-md py-3 sm:py-4' : 'bg-transparent py-4 sm:py-6'
                 }`}
         >
-            <div className="container mx-auto px-6 flex items-center justify-between">
+            <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="text-2xl font-bold font-sans tracking-tight">
+                <Link href="/" className="text-xl sm:text-2xl font-bold font-sans tracking-tight">
                     Turf<span className="text-[var(--turf-green)]">GameDen</span>
                 </Link>
 
@@ -48,7 +48,7 @@ export const Navbar = () => {
                             <Link
                                 key={link.name}
                                 href={link.href}
-                                className="px-5 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+                                className="px-4 lg:px-5 py-2 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all"
                             >
                                 {link.name}
                             </Link>
@@ -57,15 +57,16 @@ export const Navbar = () => {
                 </div>
 
                 {/* Auth / Mobile Toggle */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4">
                     {!loading && (
                         <div className="hidden md:block">
                             {user ? (
                                 <div className="flex items-center gap-2">
                                     <Link href="/dashboard">
-                                        <Button variant="ghost" className="flex items-center gap-2">
-                                            <UserIcon size={18} />
-                                            {user.displayName?.split(' ')[0] || 'Dashboard'}
+                                        <Button variant="ghost" className="flex items-center gap-2 text-sm">
+                                            <UserIcon size={16} />
+                                            <span className="hidden lg:inline">{user.displayName?.split(' ')[0] || 'Dashboard'}</span>
+                                            <span className="lg:hidden">Account</span>
                                         </Button>
                                     </Link>
                                     <button
@@ -85,10 +86,11 @@ export const Navbar = () => {
                     )}
 
                     <button
-                        className="md:hidden text-white"
+                        className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label="Toggle menu"
                     >
-                        {mobileMenuOpen ? <X /> : <Menu />}
+                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
             </div>
@@ -102,20 +104,20 @@ export const Navbar = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="md:hidden bg-black/95 backdrop-blur-xl border-t border-white/10 overflow-hidden"
                     >
-                        <div className="flex flex-col p-6 space-y-4">
+                        <div className="flex flex-col p-4 sm:p-6 space-y-3 sm:space-y-4">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     href={link.href}
-                                    className="text-lg text-gray-300 hover:text-[var(--turf-green)]"
+                                    className="text-base sm:text-lg text-gray-300 hover:text-[var(--turf-green)] py-2 transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     {link.name}
                                 </Link>
                             ))}
-                            <div className="pt-4 border-t border-white/10">
+                            <div className="pt-3 sm:pt-4 border-t border-white/10">
                                 {user ? (
-                                    <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2 sm:gap-3">
                                         <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                                             <Button className="w-full">Dashboard</Button>
                                         </Link>

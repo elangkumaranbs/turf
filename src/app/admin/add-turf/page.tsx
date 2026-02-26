@@ -20,7 +20,8 @@ export default function AddTurfPage() {
 
     const [formData, setFormData] = useState({
         name: '',
-        location: '',
+        address: '',
+        city: '',
         pricePerHour: '',
         description: '',
         wicketType: 'turf',
@@ -69,11 +70,12 @@ export default function AddTurfPage() {
             // Create Turf
             await addTurf({
                 name: formData.name,
-                location: formData.location,
+                address: formData.address,
+                city: formData.city,
                 pricePerHour: Number(formData.pricePerHour),
                 description: formData.description,
                 wicketType: formData.wicketType as 'turf' | 'mat' | 'cement',
-                images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'], // Fallback
+                images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'],
                 amenities,
             }, user.uid);
 
@@ -105,9 +107,18 @@ export default function AddTurfPage() {
                             />
 
                             <Input
-                                label="Location"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                label="City"
+                                placeholder="e.g. Gobichettipalayam"
+                                value={formData.city}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                required
+                            />
+
+                            <Input
+                                label="Address"
+                                placeholder="e.g. 12, Main Road, Near Bus Stand"
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                 required
                             />
 

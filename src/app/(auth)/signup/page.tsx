@@ -10,6 +10,7 @@ import { createUserWithEmailAndPassword, updateProfile, deleteUser, GoogleAuthPr
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { Navbar } from '@/components/Navbar';
+import { SUPER_ADMIN_EMAIL } from '@/context/AuthContext';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -18,17 +19,22 @@ export default function SignupPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isOwner, setIsOwner] = useState(false);
+
+    const getUserRole = (userEmail: string) => {
+        if (userEmail === SUPER_ADMIN_EMAIL) return 'super_admin';
+        return 'user';
+    };
 
     const checkAndCreateUser = async (user: any) => {
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (!userDoc.exists()) {
+                const role = getUserRole(user.email || '');
                 await setDoc(doc(db, 'users', user.uid), {
                     uid: user.uid,
                     name: user.displayName || 'User',
                     email: user.email || '',
-                    role: isOwner ? 'turf_admin' : 'user',
+                    role,
                     createdAt: new Date().toISOString()
                 });
             }
@@ -92,42 +98,18 @@ export default function SignupPage() {
     return (
         <main className="min-h-screen bg-[#0a0a0a] flex flex-col">
             <Navbar />
-            <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
                 {/* Background blobs */}
-                <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-[var(--turf-green)]/20 rounded-full blur-[100px] pointer-events-none" />
-                <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--turf-green)]/20 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none" />
 
-                <GlassCard className="w-full max-w-md p-8 space-y-8 relative z-10 border-white/10">
+                <GlassCard className="w-full max-w-md p-6 sm:p-8 space-y-6 sm:space-y-8 relative z-10 border-white/10">
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold text-white">Create Account</h1>
-                        <p className="text-gray-400">{isOwner ? 'List your turfs and manage bookings' : 'Join the community and start playing'}</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white">Create Account</h1>
+                        <p className="text-sm sm:text-base text-gray-400">Join the community and start booking turfs</p>
                     </div>
 
-                    {/* Player / Owner Toggle */}
-                    <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
-                        <button
-                            type="button"
-                            onClick={() => setIsOwner(false)}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${!isOwner
-                                    ? 'bg-[var(--turf-green)] text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            🏏 I'm a Player
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsOwner(true)}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${isOwner
-                                    ? 'bg-[var(--turf-green)] text-white shadow-lg'
-                                    : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            🏟️ I'm a Turf Owner
-                        </button>
-                    </div>
-
-                    <form onSubmit={handleSignup} className="space-y-6">
+                    <form onSubmit={handleSignup} className="space-y-5 sm:space-y-6">
                         <Input
                             label="Full Name"
                             placeholder="John Doe"

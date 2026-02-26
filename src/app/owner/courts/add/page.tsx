@@ -12,6 +12,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase/config';
 import { Plus, X, Upload, CheckCircle, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 
+const CITY_OPTIONS = [
+    { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
+    { label: 'Erode', value: 'Erode' },
+    { label: 'Coimbatore', value: 'Coimbatore' },
+    { label: 'Chennai', value: 'Chennai' },
+    { label: 'Salem', value: 'Salem' },
+    { label: 'Tiruppur', value: 'Tiruppur' },
+    { label: 'Madurai', value: 'Madurai' },
+    { label: 'Trichy', value: 'Trichy' },
+];
+
 export default function AddCourtPage() {
     const { user } = useAuth();
     const router = useRouter();
@@ -20,7 +31,8 @@ export default function AddCourtPage() {
 
     const [formData, setFormData] = useState({
         name: '',
-        location: '',
+        address: '',
+        city: '',
         pricePerHour: '',
         description: '',
         wicketType: 'turf',
@@ -90,7 +102,8 @@ export default function AddCourtPage() {
             // Create Turf in Firestore
             await addTurf({
                 name: formData.name,
-                location: formData.location,
+                address: formData.address,
+                city: formData.city,
                 pricePerHour: Number(formData.pricePerHour),
                 description: formData.description,
                 wicketType: formData.wicketType as 'turf' | 'mat' | 'cement',
@@ -148,14 +161,21 @@ export default function AddCourtPage() {
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
                             />
-                            <Input
-                                label="Location"
-                                placeholder="e.g. Anna Nagar, Chennai"
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                            <Select
+                                label="City"
+                                value={formData.city}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                options={CITY_OPTIONS}
                                 required
                             />
                         </div>
+                        <Input
+                            label="Address"
+                            placeholder="e.g. 12, Main Road, Near Bus Stand"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            required
+                        />
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300 ml-1">Description</label>
                             <textarea
@@ -217,6 +237,10 @@ export default function AddCourtPage() {
                                 onChange={(e) => setFormData({ ...formData, closeTime: e.target.value })}
                             />
                         </div>
+                    </div>
+                    {/* Preview: auto-generated slots */}
+                    <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                        <p className="text-xs text-gray-400">⏰ Booking slots will be auto-generated in 1-hour intervals between your opening and closing time.</p>
                     </div>
 
                     {/* Contact Info */}

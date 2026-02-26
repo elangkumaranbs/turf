@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ──────────────────────────────────────────────────────────────
+    // Helper Functions
+    // ──────────────────────────────────────────────────────────────
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Get user data from database
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Check if user is super admin
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+             (getUserData().role == 'super_admin' || 
+              request.auth.token.email == 'gamedenofficial@gmail.com');
+    }
+    
+    // Check if user is turf admin (owner)
+    function isTurfAdmin() {
+      return isAuthenticated() && getUserData().role == 'turf_admin';
+    }
+    
+    // Check if user is turf admin or super admin
+    function isAdminOrSuper() {
+      return isSuperAdmin() || isTurfAdmin();
+    }
+    
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ──────────────────────────────────────────────────────────────
+    // USERS Collection
+    // ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone can read their own user document
+      allow read: if isOwner(userId) || isSuperAdmin();
+      
+      // Super admin can read all users
+      allow list: if isSuperAdmin();
+      
+      // Users can create their own document on signup
+      allow create: if isOwner(userId);
+      
+      // Users can update their own profile (except role)
+      allow update: if isOwner(userId) && 
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      
+      // Super admin can update any user (including role changes)
+      allow update: if isSuperAdmin();
+      
+      // Super admin can delete users
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ──────────────────────────────────────────────────────────────
+    // TURFS Collection
+    // ──────────────────────────────────────────────────────────────
+    match /turfs/{turfId} {
+      // Everyone can read turfs (public listings)
+      allow read: if true;
+      
+      // Everyone can list turfs
+      allow list: if true;
+      
+      // Turf admin can create their own turfs
+      allow create: if isAdminOrSuper() && 
+                       (isSuperAdmin() || request.resource.data.adminId == request.auth.uid);
+      
+      // Owner can update their own turfs
+      allow update: if isOwner(resource.data.adminId) || isSuperAdmin();
+      
+      // Owner or super admin can delete
+      allow delete: if isOwner(resource.data.adminId) || isSuperAdmin();
+    }
+    
+    // ──────────────────────────────────────────────────────────────
+    // BOOKINGS Collection
+    // ──────────────────────────────────────────────────────────────
+    match /bookings/{bookingId} {
+      // User can read their own bookings
+      allow read: if isOwner(resource.data.userId) || isSuperAdmin();
+      
+      // Turf admin can read bookings for their turfs
+      allow read: if isAdminOrSuper() && 
+                     get(/databases/$(database)/documents/turfs/$(resource.data.turfId)).data.adminId == request.auth.uid;
+      
+      // List bookings: users see their own, admins see their turfs', super admin sees all
+      allow list: if isAuthenticated();
+      
+      // Authenticated users can create bookings
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // User can update their own bookings (e.g., cancel)
+      allow update: if isOwner(resource.data.userId) || isSuperAdmin();
+      
+      // Turf admin can update bookings for their turfs
+      allow update: if isAdminOrSuper() && 
+                       get(/databases/$(database)/documents/turfs/$(resource.data.turfId)).data.adminId == request.auth.uid;
+      
+      // Delete: user, turf owner, or super admin
+      allow delete: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow delete: if isAdminOrSuper() && 
+                       get(/databases/$(database)/documents/turfs/$(resource.data.turfId)).data.adminId == request.auth.uid;
+    }
+    
+    // ──────────────────────────────────────────────────────────────
+    // Default: Deny all other collections
+    // ──────────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

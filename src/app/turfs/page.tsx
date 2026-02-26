@@ -27,18 +27,20 @@ export default function TurfsPage() {
         fetchTurfs();
     }, []);
 
-    // Extract unique locations for the dropdown
+    // Extract unique cities for the dropdown
     const locations = useMemo(() => {
-        const locs = [...new Set(turfs.map(t => t.location))].sort();
-        return locs;
+        const cities = turfs.map(t => t.city || t.location || '').filter(Boolean);
+        return [...new Set(cities)].sort();
     }, [turfs]);
 
     // Filter & sort turfs
     const filteredTurfs = useMemo(() => {
         let result = turfs.filter((turf) => {
             const query = searchQuery.toLowerCase();
-            const matchesSearch = turf.name.toLowerCase().includes(query) || turf.location.toLowerCase().includes(query);
-            const matchesLocation = selectedLocation === 'all' || turf.location === selectedLocation;
+            const displayLocation = turf.address && turf.city ? `${turf.address}, ${turf.city}` : turf.location || '';
+            const matchesSearch = turf.name.toLowerCase().includes(query) || displayLocation.toLowerCase().includes(query);
+            const turfCity = turf.city || turf.location || '';
+            const matchesLocation = selectedLocation === 'all' || turfCity === selectedLocation;
             return matchesSearch && matchesLocation;
         });
 
@@ -79,51 +81,54 @@ export default function TurfsPage() {
                 </div>
 
                 {/* Filter Bar */}
-                <div className="mb-8 space-y-4">
+                <div className="mb-6 sm:mb-8 space-y-3 sm:space-y-4">
                     <div className="flex flex-col sm:flex-row gap-3">
                         {/* Search */}
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                             <input
                                 type="text"
                                 placeholder="Search by name..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-11 pl-11 pr-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-[var(--turf-green)] focus:ring-1 focus:ring-[var(--turf-green)] focus:outline-none transition-all"
+                                className="w-full h-11 sm:h-12 pl-10 sm:pl-11 pr-4 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-[var(--turf-green)] focus:ring-1 focus:ring-[var(--turf-green)] focus:outline-none transition-all"
                             />
                         </div>
 
-                        {/* Location Dropdown */}
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                            <select
-                                value={selectedLocation}
-                                onChange={(e) => setSelectedLocation(e.target.value)}
-                                className="h-11 appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer min-w-[180px]"
-                            >
-                                <option value="all" className="bg-[#1a1a1a]">All Locations</option>
-                                {locations.map(loc => (
-                                    <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        </div>
+                        {/* Location & Sort in row on mobile, separate on desktop */}
+                        <div className="flex gap-3">
+                            {/* Location Dropdown */}
+                            <div className="relative flex-1 sm:flex-none">
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <select
+                                    value={selectedLocation}
+                                    onChange={(e) => setSelectedLocation(e.target.value)}
+                                    className="h-11 sm:h-12 w-full appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-8 sm:pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer sm:min-w-[180px]"
+                                >
+                                    <option value="all" className="bg-[#1a1a1a]">All Locations</option>
+                                    {locations.map(loc => (
+                                        <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
 
-                        {/* Sort Dropdown */}
-                        <div className="relative">
-                            <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                                className="h-11 appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer min-w-[180px]"
-                            >
-                                <option value="default" className="bg-[#1a1a1a]">Sort By</option>
-                                <option value="price-low" className="bg-[#1a1a1a]">Price: Low → High</option>
-                                <option value="price-high" className="bg-[#1a1a1a]">Price: High → Low</option>
-                                <option value="name-az" className="bg-[#1a1a1a]">Name: A → Z</option>
-                                <option value="name-za" className="bg-[#1a1a1a]">Name: Z → A</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            {/* Sort Dropdown */}
+                            <div className="relative flex-1 sm:flex-none">
+                                <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                                    className="h-11 sm:h-12 w-full appearance-none rounded-xl border border-white/10 bg-white/5 pl-9 pr-8 sm:pr-10 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none transition-all cursor-pointer sm:min-w-[180px]"
+                                >
+                                    <option value="default" className="bg-[#1a1a1a]">Sort By</option>
+                                    <option value="price-low" className="bg-[#1a1a1a]">Price: Low → High</option>
+                                    <option value="price-high" className="bg-[#1a1a1a]">Price: High → Low</option>
+                                    <option value="name-az" className="bg-[#1a1a1a]">Name: A → Z</option>
+                                    <option value="name-za" className="bg-[#1a1a1a]">Name: Z → A</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
@@ -188,7 +193,10 @@ export default function TurfsPage() {
                                         <h2 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:text-[var(--turf-green)] transition-colors">{turf.name}</h2>
                                         <div className="flex items-center text-gray-400 text-sm">
                                             <MapPin className="w-4 h-4 mr-1 text-[var(--turf-green)]" />
-                                            {turf.location}
+                                            {turf.address && turf.city
+                                                ? `${turf.address}, ${turf.city}`
+                                                : turf.location || 'Location not specified'
+                                            }
                                         </div>
                                     </div>
 

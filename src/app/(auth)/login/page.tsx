@@ -78,18 +78,18 @@ export default function LoginPage() {
     return (
         <main className="min-h-screen bg-[#0a0a0a] flex flex-col">
             <Navbar />
-            <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
+            <div className="flex-1 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
                 {/* Background blobs */}
-                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-[var(--turf-green)]/20 rounded-full blur-[100px] pointer-events-none" />
-                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute top-1/2 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--turf-green)]/20 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none" />
 
-                <GlassCard className="w-full max-w-md p-8 space-y-8 relative z-10 border-white/10">
+                <GlassCard className="w-full max-w-md p-6 sm:p-8 space-y-6 sm:space-y-8 relative z-10 border-white/10">
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold text-white">Welcome Back</h1>
-                        <p className="text-gray-400">Sign in to book your next game</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white">Welcome Back</h1>
+                        <p className="text-sm sm:text-base text-gray-400">Sign in to book your next game</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-5 sm:space-y-6">
                         <Input
                             label="Email Address"
                             type="email"

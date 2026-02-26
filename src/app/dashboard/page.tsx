@@ -34,7 +34,9 @@ export default function DashboardPage() {
                         return {
                             ...booking,
                             turfName: turf?.name || 'Unknown Turf',
-                            location: turf?.location || 'Unknown Location'
+                            location: turf?.address && turf?.city
+                                ? `${turf.address}, ${turf.city}`
+                                : turf?.location || 'Unknown Location'
                         };
                     })
                 );
@@ -60,27 +62,27 @@ export default function DashboardPage() {
     return (
         <main className="min-h-screen bg-[#0a0a0a] pb-12">
             <Navbar />
-            <div className="container mx-auto px-6 pt-32">
-                <div className="flex justify-between items-end mb-8">
+            <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 sm:mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">My Dashboard</h1>
-                        <p className="text-gray-400">Welcome back, {user?.displayName || 'Player'}</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white">My Dashboard</h1>
+                        <p className="text-sm sm:text-base text-gray-400 mt-1">Welcome back, {user?.displayName || 'Player'}</p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-sm text-gray-400">Total Bookings</p>
-                        <p className="text-2xl font-bold text-[var(--turf-green)]">{bookings.length}</p>
+                    <div className="text-left sm:text-right">
+                        <p className="text-xs sm:text-sm text-gray-400">Total Bookings</p>
+                        <p className="text-xl sm:text-2xl font-bold text-[var(--turf-green)]">{bookings.length}</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                     {/* Stats / Sidebar */}
-                    <div className="lg:col-span-1 space-y-6">
-                        <GlassCard className="p-6 border-white/10">
-                            <h3 className="text-xl font-semibold text-white mb-4">Profile</h3>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between">
+                    <div className="lg:col-span-1 space-y-4 sm:space-y-6">
+                        <GlassCard className="p-4 sm:p-6 border-white/10">
+                            <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Profile</h3>
+                            <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+                                <div className="flex justify-between gap-2">
                                     <span className="text-gray-400">Email</span>
-                                    <span className="text-white">{user?.email}</span>
+                                    <span className="text-white text-right truncate max-w-[60%]">{user?.email}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-gray-400">Member Since</span>
@@ -101,9 +103,9 @@ export default function DashboardPage() {
 
                         {/* Admin Actions - Visible to Admins (or all for demo simplicity if needed, but keeping logic strict) */}
                         {(user?.role === 'turf_admin' || user?.role === 'super_admin') && (
-                            <GlassCard className="p-6 border-[var(--turf-green)]/20 bg-[var(--turf-green)]/5">
-                                <h3 className="text-xl font-semibold text-white mb-4">Owner Console</h3>
-                                <div className="space-y-3">
+                            <GlassCard className="p-4 sm:p-6 border-[var(--turf-green)]/20 bg-[var(--turf-green)]/5">
+                                <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Owner Console</h3>
+                                <div className="space-y-2 sm:space-y-3">
                                     <button
                                         onClick={() => router.push('/owner')}
                                         className="w-full bg-[var(--turf-green)] text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
@@ -136,10 +138,10 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Bookings List */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <h2 className="text-2xl font-bold text-white">Recent Bookings</h2>
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                        <h2 className="text-xl sm:text-2xl font-bold text-white">Recent Bookings</h2>
                         {bookings.length === 0 ? (
-                            <GlassCard className="p-12 text-center border-white/10 flex flex-col items-center">
+                            <GlassCard className="p-8 sm:p-12 text-center border-white/10 flex flex-col items-center">
                                 <AlertCircle className="w-12 h-12 text-gray-500 mb-4" />
                                 <h3 className="text-xl text-white font-medium">No bookings yet</h3>
                                 <p className="text-gray-400 mt-2 mb-6">Start your journey by booking a turf today.</p>
@@ -153,23 +155,26 @@ export default function DashboardPage() {
                         ) : (
                             <div className="space-y-4">
                                 {bookings.map((booking) => (
-                                    <GlassCard key={booking.id} className="p-6 border-white/10 flex flex-col md:flex-row gap-6 md:items-center justify-between group hover:border-[var(--turf-green)]/30 transition-all">
+                                    <GlassCard key={booking.id} className="p-4 sm:p-6 border-white/10 flex flex-col md:flex-row gap-4 sm:gap-6 md:items-center justify-between group hover:border-[var(--turf-green)]/30 transition-all">
                                         <div className="space-y-2">
-                                            <h3 className="text-lg font-bold text-white group-hover:text-[var(--turf-green)] transition-colors">
+                                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[var(--turf-green)] transition-colors">
                                                 {booking.turfName}
                                             </h3>
-                                            <div className="flex items-center text-gray-400 text-sm">
-                                                <MapPin className="w-4 h-4 mr-1" />
-                                                {booking.location}
+                                            <div className="flex items-center text-gray-400 text-xs sm:text-sm">
+                                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 shrink-0" />
+                                                <span className="truncate">{booking.location}</span>
                                             </div>
-                                            <div className="flex items-center gap-4 text-sm pt-2">
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm pt-2">
                                                 <div className="flex items-center text-white bg-white/5 px-3 py-1 rounded-full">
                                                     <Calendar className="w-3 h-3 mr-2 text-[var(--turf-green)]" />
                                                     {format(new Date(booking.date), 'MMM d, yyyy')}
                                                 </div>
                                                 <div className="flex items-center text-white bg-white/5 px-3 py-1 rounded-full">
                                                     <Clock className="w-3 h-3 mr-2 text-[var(--turf-green)]" />
-                                                    {booking.time}
+                                                    {booking.times && booking.times.length > 0
+                                                        ? booking.times.join(', ')
+                                                        : booking.time || 'N/A'
+                                                    }
                                                 </div>
                                             </div>
                                         </div>

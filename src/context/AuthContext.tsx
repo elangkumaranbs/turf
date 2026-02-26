@@ -4,13 +4,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+
+// ─── Super Admin Email ──────────────────────────────────────────────
+export const SUPER_ADMIN_EMAIL = 'gamedenofficial@gmail.com';
 
 interface UserData {
     uid: string;
     email: string | null;
     displayName: string | null;
-    role?: 'user' | 'turf_admin' | 'super_admin';
+    role?: 'user' | 'turf_admin' | 'super_admin' | 'pending_approval';
 }
 
 interface AuthContextType {
@@ -31,28 +34,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
                 try {
-                    // Fetch additional user data from Firestore (e.g., role)
-                    // For now, we'll just use the auth object, assuming the document exists.
-                    // In a real app, you'd want to create the document on signup.
-                    // This is a placeholder for the actual role fetching logic.
-                    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                    const userDocRef = doc(db, 'users', firebaseUser.uid);
+                    const userDoc = await getDoc(userDocRef);
                     const userData = userDoc.data();
+                    let role = userData?.role || 'user';
+
+                    // Auto-promote super admin by email
+                    if (firebaseUser.email === SUPER_ADMIN_EMAIL && role !== 'super_admin') {
+                        role = 'super_admin';
+                        try {
+                            if (userDoc.exists()) {
+                                await updateDoc(userDocRef, { role: 'super_admin' });
+                            } else {
+                                await setDoc(userDocRef, {
+                                    uid: firebaseUser.uid,
+                                    name: firebaseUser.displayName || 'Super Admin',
+                                    email: firebaseUser.email,
+                                    role: 'super_admin',
+                                    createdAt: new Date().toISOString()
+                                });
+                            }
+                        } catch (e) {
+                            console.error("Failed to auto-promote super admin:", e);
+                        }
+                    }
 
                     setUser({
                         uid: firebaseUser.uid,
                         email: firebaseUser.email,
                         displayName: firebaseUser.displayName,
-                        role: userData?.role || 'user' // Default to user if not found
+                        role
                     });
                 } catch (error) {
                     console.error("Error fetching user role:", error);
-                    // Fallback if firestore fails (e.g. permissions or net)
                     setUser({
                         uid: firebaseUser.uid,
                         email: firebaseUser.email,
                         displayName: firebaseUser.displayName,
-                        role: 'user'
-                    })
+                        role: firebaseUser.email === SUPER_ADMIN_EMAIL ? 'super_admin' : 'user'
+                    });
                 }
             } else {
                 setUser(null);

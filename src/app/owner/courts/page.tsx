@@ -9,6 +9,18 @@ import { Input } from '@/components/ui/Input';
 import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Select } from '@/components/ui/Select';
+
+const CITY_OPTIONS = [
+    { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
+    { label: 'Erode', value: 'Erode' },
+    { label: 'Coimbatore', value: 'Coimbatore' },
+    { label: 'Chennai', value: 'Chennai' },
+    { label: 'Salem', value: 'Salem' },
+    { label: 'Tiruppur', value: 'Tiruppur' },
+    { label: 'Madurai', value: 'Madurai' },
+    { label: 'Trichy', value: 'Trichy' },
+];
 
 export default function MyCourtsPage() {
     const { user } = useAuth();
@@ -48,7 +60,8 @@ export default function MyCourtsPage() {
         setEditingId(turf.id);
         setEditData({
             name: turf.name,
-            location: turf.location,
+            address: turf.address || '',
+            city: turf.city || '',
             pricePerHour: turf.pricePerHour,
             description: turf.description,
             operatingHours: turf.operatingHours || { open: '06:00', close: '22:00' },
@@ -128,11 +141,19 @@ export default function MyCourtsPage() {
                                             value={editData.name || ''}
                                             onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                                         />
-                                        <Input
-                                            label="Location"
-                                            value={editData.location || ''}
-                                            onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                                        <Select
+                                            label="City"
+                                            value={editData.city || ''}
+                                            onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                                            options={CITY_OPTIONS}
                                         />
+                                        <div className="md:col-span-2">
+                                            <Input
+                                                label="Address"
+                                                value={editData.address || ''}
+                                                onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                                            />
+                                        </div>
                                         <Input
                                             label="Price per Hour (₹)"
                                             type="number"
@@ -209,7 +230,10 @@ export default function MyCourtsPage() {
                                             <h3 className="text-xl font-bold text-white mb-1">{turf.name}</h3>
                                             <div className="flex items-center text-gray-400 text-sm mb-3">
                                                 <MapPin size={14} className="mr-1 text-[var(--turf-green)]" />
-                                                {turf.location}
+                                                {turf.address && turf.city
+                                                    ? `${turf.address}, ${turf.city}`
+                                                    : turf.location || 'Location not specified'
+                                                }
                                             </div>
                                             <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
                                                 <span className="flex items-center gap-1">

@@ -40,18 +40,18 @@ export default function TurfDetailsPage() {
         fetchTurf();
     }, [params.id]);
 
-    const handleBooking = async (date: string, time: string) => {
+    const handleBooking = async (date: string, times: string[]) => {
         if (!turf || !user) return;
         try {
             await createBooking({
                 userId: user.uid,
                 turfId: turf.id,
                 date,
-                time,
-                duration: 60 // Default 1 hour for now
+                times,
+                duration: 60 * times.length
             });
             alert('Booking Confirmed! (This would show a success modal in production)');
-            router.push('/dashboard'); // Redirect to dashboard
+            router.push('/dashboard');
         } catch (error: any) {
             console.error("Booking error:", error);
             if (error.code === 'permission-denied') {
@@ -108,7 +108,10 @@ export default function TurfDetailsPage() {
                             <h1 className="text-4xl font-bold text-white mb-2">{turf.name}</h1>
                             <div className="flex items-center text-gray-400">
                                 <MapPin className="w-5 h-5 mr-2 text-[var(--turf-green)]" />
-                                {turf.location}
+                                {turf.address && turf.city
+                                    ? `${turf.address}, ${turf.city}`
+                                    : turf.location || 'Location not specified'
+                                }
                             </div>
                         </div>
 
@@ -136,6 +139,7 @@ export default function TurfDetailsPage() {
                                 turfId={turf.id}
                                 pricePerHour={turf.pricePerHour}
                                 onBook={handleBooking}
+                                operatingHours={turf.operatingHours}
                                 initialDate={initialDate || undefined}
                                 initialTime={initialTime || undefined}
                             />

@@ -1,18 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { getTurfs, Turf } from '@/lib/firebase/firestore';
 
 export const BookingWidget = () => {
     const router = useRouter();
     const [date, setDate] = useState<string>('');
     const [time, setTime] = useState<string>('');
+    const [turfs, setTurfs] = useState<Turf[]>([]);
+    const [selectedCity, setSelectedCity] = useState<string>('');
+    const [selectedTurfId, setSelectedTurfId] = useState<string>('');
 
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getTurfs();
+            setTurfs(data);
+        };
+        fetchData();
+    }, []);
+
+    // Unique cities from turfs
+    const cities = useMemo(() => {
+        const citySet = [...new Set(turfs.map(t => t.city || t.location || '').filter(Boolean))].sort();
+        return citySet;
+    }, [turfs]);
+
+    // Venues filtered by selected city
+    const venues = useMemo(() => {
+        if (!selectedCity) return turfs;
+        return turfs.filter(t => (t.city || t.location) === selectedCity);
+    }, [turfs, selectedCity]);
+
+    // Auto-select first city if available
+    useEffect(() => {
+        if (cities.length > 0 && !selectedCity) {
+            setSelectedCity(cities[0]);
+        }
+    }, [cities]);
+
+    // Auto-select first venue when city changes
+    useEffect(() => {
+        if (venues.length > 0) {
+            setSelectedTurfId(venues[0].id);
+        } else {
+            setSelectedTurfId('');
+        }
+    }, [venues]);
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     const currentHour = new Date().getHours();
 
@@ -36,7 +75,6 @@ export const BookingWidget = () => {
         { label: '10:00 PM', value: '10:00 PM' },
     ];
 
-    // Helper to convert 12h time string to 24h number for comparison
     const parse12hTo24h = (timeStr: string): number => {
         const [time, period] = timeStr.split(' ');
         let hour = parseInt(time);
@@ -56,11 +94,11 @@ export const BookingWidget = () => {
     ];
 
     const handleSearch = () => {
-        // Redirect to Pony Turf details page with selected date and time
+        if (!selectedTurfId) return;
         const params = new URLSearchParams();
         if (date) params.set('date', date);
         if (time) params.set('time', time);
-        router.push(`/turfs/pony-turf?${params.toString()}`);
+        router.push(`/turfs/${selectedTurfId}?${params.toString()}`);
     };
 
     return (
@@ -72,14 +110,16 @@ export const BookingWidget = () => {
             <div className="space-y-4">
                 {/* Location */}
                 <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-300 ml-1">Location</label>
+                    <label className="text-sm font-medium text-gray-300 ml-1">City</label>
                     <div className="relative">
                         <Select
                             options={[
-                                { label: 'Gobichettipalayam', value: 'gobichettipalayam' },
+                                { label: 'All Cities', value: '' },
+                                ...cities.map(c => ({ label: c, value: c }))
                             ]}
                             className="pl-10"
-                            defaultValue="gobichettipalayam"
+                            value={selectedCity}
+                            onChange={(e) => setSelectedCity(e.target.value)}
                         />
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     </div>
@@ -90,9 +130,10 @@ export const BookingWidget = () => {
                     <label className="text-sm font-medium text-gray-300 ml-1">Venues</label>
                     <Select
                         options={[
-                            { label: 'Pony Turf', value: 'pony_turf' },
+                            ...venues.map(v => ({ label: v.name, value: v.id }))
                         ]}
-                        defaultValue="pony_turf"
+                        value={selectedTurfId}
+                        onChange={(e) => setSelectedTurfId(e.target.value)}
                     />
                 </div>
 
