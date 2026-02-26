@@ -24,7 +24,10 @@ export const Navbar = () => {
         { name: 'Home', href: '/' },
         { name: 'About', href: '#about' },
         { name: 'Service', href: '#service' },
-        { name: 'Cricket Courts', href: '/turfs' },
+        { name: 'Courts', href: '/turfs' },
+        ...((user?.role === 'turf_admin' || user?.role === 'super_admin')
+            ? [{ name: 'Owner Panel', href: '/owner' }]
+            : []),
     ];
 
     return (

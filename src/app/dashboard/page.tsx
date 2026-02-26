@@ -102,16 +102,22 @@ export default function DashboardPage() {
                         {/* Admin Actions - Visible to Admins (or all for demo simplicity if needed, but keeping logic strict) */}
                         {(user?.role === 'turf_admin' || user?.role === 'super_admin') && (
                             <GlassCard className="p-6 border-[var(--turf-green)]/20 bg-[var(--turf-green)]/5">
-                                <h3 className="text-xl font-semibold text-white mb-4">Admin Console</h3>
+                                <h3 className="text-xl font-semibold text-white mb-4">Owner Console</h3>
                                 <div className="space-y-3">
                                     <button
-                                        onClick={() => router.push('/admin/add-turf')}
+                                        onClick={() => router.push('/owner')}
                                         className="w-full bg-[var(--turf-green)] text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <Plus className="w-4 h-4" /> Add New Turf
+                                        <Plus className="w-4 h-4" /> Owner Panel
                                     </button>
                                     <button
-                                        onClick={() => router.push('/admin/manage-bookings')}
+                                        onClick={() => router.push('/owner/courts/add')}
+                                        className="w-full bg-white/10 text-white px-4 py-2 rounded-lg font-medium hover:bg-white/20 transition-colors"
+                                    >
+                                        Add New Court
+                                    </button>
+                                    <button
+                                        onClick={() => router.push('/owner/bookings')}
                                         className="w-full bg-white/10 text-white px-4 py-2 rounded-lg font-medium hover:bg-white/20 transition-colors"
                                     >
                                         Manage Bookings

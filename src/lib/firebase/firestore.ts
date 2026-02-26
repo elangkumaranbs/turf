@@ -1,6 +1,12 @@
 import { db, storage } from './config';
-import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+// ─── Turf Interface ────────────────────────────────────────────────
+export interface OperatingHours {
+    open: string;  // e.g. "06:00"
+    close: string; // e.g. "22:00"
+}
 
 export interface Turf {
     id: string;
@@ -11,68 +17,106 @@ export interface Turf {
     images: string[];
     amenities: string[];
     wicketType: 'turf' | 'mat' | 'cement';
-    adminId: string;
+    adminId: string;           // Owner's UID
+    contactPhone?: string;
+    contactEmail?: string;
+    operatingHours?: OperatingHours;
+    courts?: number;           // Number of courts/pitches at this venue
+    status?: 'active' | 'inactive';
+    createdAt?: string;
 }
 
-// Mock data to use until backend is populated
-const MOCK_TURFS: Turf[] = [
-    {
-        id: 'pony-turf',
-        name: 'Pony Turf',
-        location: 'Gobichettipalayam',
-        pricePerHour: 1000,
-        description: 'Premium quality turf for cricket and football enthusiasts.',
-        images: ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'],
-        amenities: ['Floodlights', 'Parking', 'Water', 'Restroom'],
-        wicketType: 'turf',
-        adminId: 'admin1'
-    }
-];
+// ─── Booking Interface ─────────────────────────────────────────────
+export interface Booking {
+    id?: string;
+    userId: string;
+    turfId: string;
+    date: string; // YYYY-MM-DD
+    time: string; // hh:mm AM/PM (12-hour format)
+    duration: number; // in minutes
+    createdAt: string;
+    status: 'confirmed' | 'cancelled' | 'pending';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  TURF OPERATIONS (fully dynamic — no hardcoded data)
+// ═══════════════════════════════════════════════════════════════════
 
 export const getTurfs = async (): Promise<Turf[]> => {
     try {
         const turfsCol = collection(db, 'turfs');
         const turfSnapshot = await getDocs(turfsCol);
-        const turfs = turfSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Turf));
-
-        // Return mock data if Firestore is empty (for demo purposes)
-        if (turfs.length === 0) {
-            return MOCK_TURFS;
-        }
-        return turfs;
+        return turfSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Turf));
     } catch (error) {
-        console.warn("Error fetching turfs (using mock data):", error);
-        return MOCK_TURFS;
+        console.error("Error fetching turfs:", error);
+        return [];
     }
 };
 
 export const getTurfById = async (id: string): Promise<Turf | null> => {
     try {
-        // Check mock data first if ID matches
-        const mockTurf = MOCK_TURFS.find(t => t.id === id);
-        if (mockTurf) return mockTurf;
-
         const turfDoc = await getDoc(doc(db, 'turfs', id));
         if (turfDoc.exists()) {
             return { id: turfDoc.id, ...turfDoc.data() } as Turf;
         }
         return null;
     } catch (error) {
-        console.warn("Error fetching turf by ID:", error);
-        return MOCK_TURFS.find(t => t.id === id) || null;
+        console.error("Error fetching turf by ID:", error);
+        return null;
     }
 };
 
-export interface Booking {
-    id?: string;
-    userId: string;
-    turfId: string;
-    date: string; // YYYY-MM-DD
-    time: string; // HH:mm
-    duration: number; // in minutes
-    createdAt: string;
-    status: 'confirmed' | 'cancelled' | 'pending';
-}
+export const getTurfsByAdmin = async (adminId: string): Promise<Turf[]> => {
+    try {
+        const turfsCol = collection(db, 'turfs');
+        const q = query(turfsCol, where("adminId", "==", adminId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Turf));
+    } catch (error) {
+        console.error("Error fetching admin turfs:", error);
+        return [];
+    }
+};
+
+export const addTurf = async (turfData: Omit<Turf, 'id' | 'adminId'>, adminId: string): Promise<string> => {
+    try {
+        const turfsCol = collection(db, 'turfs');
+        const newTurf = {
+            ...turfData,
+            adminId,
+            createdAt: new Date().toISOString(),
+            status: turfData.status || 'active'
+        };
+        const docRef = await addDoc(turfsCol, newTurf);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error adding turf:", error);
+        throw error;
+    }
+};
+
+export const updateTurf = async (turfId: string, data: Partial<Omit<Turf, 'id' | 'adminId'>>): Promise<void> => {
+    try {
+        const turfRef = doc(db, 'turfs', turfId);
+        await updateDoc(turfRef, { ...data, updatedAt: new Date().toISOString() });
+    } catch (error) {
+        console.error("Error updating turf:", error);
+        throw error;
+    }
+};
+
+export const deleteTurf = async (turfId: string): Promise<void> => {
+    try {
+        await deleteDoc(doc(db, 'turfs', turfId));
+    } catch (error) {
+        console.error("Error deleting turf:", error);
+        throw error;
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  BOOKING OPERATIONS
+// ═══════════════════════════════════════════════════════════════════
 
 export const createBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status'>): Promise<string> => {
     try {
@@ -118,7 +162,6 @@ export const getAllBookings = async (): Promise<Booking[]> => {
     try {
         const bookingsCol = collection(db, 'bookings');
         const snapshot = await getDocs(bookingsCol);
-        // In a real app, this would be paginated or filtered by admin's turfs
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
     } catch (error) {
         console.error("Error fetching all bookings:", error);
@@ -126,34 +169,90 @@ export const getAllBookings = async (): Promise<Booking[]> => {
     }
 };
 
-export const addTurf = async (turfData: Omit<Turf, 'id' | 'adminId'>, adminId: string): Promise<string> => {
+// Get all bookings across an owner's turfs
+export const getBookingsByOwner = async (ownerId: string): Promise<(Booking & { turfName?: string })[]> => {
     try {
-        const turfsCol = collection(db, 'turfs');
-        const newTurf = {
-            ...turfData,
-            adminId,
-            createdAt: new Date().toISOString(),
-            status: 'active'
-        };
-        const docRef = await addDoc(turfsCol, newTurf);
-        return docRef.id;
-    } catch (error) {
-        console.error("Error adding turf:", error);
-        throw error;
-    }
-};
+        // First, get all turfs owned by this owner
+        const ownerTurfs = await getTurfsByAdmin(ownerId);
+        if (ownerTurfs.length === 0) return [];
 
-export const getTurfsByAdmin = async (adminId: string): Promise<Turf[]> => {
-    try {
-        const turfsCol = collection(db, 'turfs');
-        const q = query(turfsCol, where("adminId", "==", adminId));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Turf));
+        const turfMap = new Map(ownerTurfs.map(t => [t.id, t.name]));
+        const turfIds = ownerTurfs.map(t => t.id);
+
+        // Firestore 'in' queries support max 30 values, chunk if needed
+        const allBookings: (Booking & { turfName?: string })[] = [];
+        const chunks = [];
+        for (let i = 0; i < turfIds.length; i += 30) {
+            chunks.push(turfIds.slice(i, i + 30));
+        }
+
+        for (const chunk of chunks) {
+            const bookingsCol = collection(db, 'bookings');
+            const q = query(bookingsCol, where("turfId", "in", chunk));
+            const snapshot = await getDocs(q);
+            const bookings = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    turfName: turfMap.get(data.turfId) || 'Unknown'
+                } as Booking & { turfName?: string };
+            });
+            allBookings.push(...bookings);
+        }
+
+        // Sort by creation date (newest first)
+        allBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return allBookings;
     } catch (error) {
-        console.error("Error fetching admin turfs:", error);
+        console.error("Error fetching owner bookings:", error);
         return [];
     }
 };
+
+// ═══════════════════════════════════════════════════════════════════
+//  OWNER STATS
+// ═══════════════════════════════════════════════════════════════════
+
+export interface OwnerStats {
+    totalCourts: number;
+    totalBookings: number;
+    activeCourts: number;
+}
+
+export const getOwnerStats = async (ownerId: string): Promise<OwnerStats> => {
+    try {
+        const ownerTurfs = await getTurfsByAdmin(ownerId);
+        const turfIds = ownerTurfs.map(t => t.id);
+
+        let totalBookings = 0;
+        if (turfIds.length > 0) {
+            const chunks = [];
+            for (let i = 0; i < turfIds.length; i += 30) {
+                chunks.push(turfIds.slice(i, i + 30));
+            }
+            for (const chunk of chunks) {
+                const bookingsCol = collection(db, 'bookings');
+                const q = query(bookingsCol, where("turfId", "in", chunk));
+                const snapshot = await getDocs(q);
+                totalBookings += snapshot.size;
+            }
+        }
+
+        return {
+            totalCourts: ownerTurfs.length,
+            activeCourts: ownerTurfs.filter(t => t.status !== 'inactive').length,
+            totalBookings
+        };
+    } catch (error) {
+        console.error("Error fetching owner stats:", error);
+        return { totalCourts: 0, activeCourts: 0, totalBookings: 0 };
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  USER OPERATIONS
+// ═══════════════════════════════════════════════════════════════════
 
 export const getAllUsers = async (): Promise<any[]> => {
     try {
@@ -172,6 +271,16 @@ export const updateUserRole = async (userId: string, newRole: 'user' | 'turf_adm
         await updateDoc(userRef, { role: newRole });
     } catch (error) {
         console.error("Error updating user role:", error);
+        throw error;
+    }
+};
+
+export const updateUserProfile = async (userId: string, data: Record<string, any>): Promise<void> => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, { ...data, updatedAt: new Date().toISOString() });
+    } catch (error) {
+        console.error("Error updating user profile:", error);
         throw error;
     }
 };

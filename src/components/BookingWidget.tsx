@@ -17,30 +17,39 @@ export const BookingWidget = () => {
     const currentHour = new Date().getHours();
 
     const allTimeOptions = [
-        { label: '06:00', value: '06:00' },
-        { label: '07:00', value: '07:00' },
-        { label: '08:00', value: '08:00' },
-        { label: '09:00', value: '09:00' },
-        { label: '10:00', value: '10:00' },
-        { label: '11:00', value: '11:00' },
-        { label: '12:00', value: '12:00' },
-        { label: '13:00', value: '13:00' },
-        { label: '14:00', value: '14:00' },
-        { label: '15:00', value: '15:00' },
-        { label: '16:00', value: '16:00' },
-        { label: '17:00', value: '17:00' },
-        { label: '18:00', value: '18:00' },
-        { label: '19:00', value: '19:00' },
-        { label: '20:00', value: '20:00' },
-        { label: '21:00', value: '21:00' },
-        { label: '22:00', value: '22:00' },
+        { label: '06:00 AM', value: '06:00 AM' },
+        { label: '07:00 AM', value: '07:00 AM' },
+        { label: '08:00 AM', value: '08:00 AM' },
+        { label: '09:00 AM', value: '09:00 AM' },
+        { label: '10:00 AM', value: '10:00 AM' },
+        { label: '11:00 AM', value: '11:00 AM' },
+        { label: '12:00 PM', value: '12:00 PM' },
+        { label: '01:00 PM', value: '01:00 PM' },
+        { label: '02:00 PM', value: '02:00 PM' },
+        { label: '03:00 PM', value: '03:00 PM' },
+        { label: '04:00 PM', value: '04:00 PM' },
+        { label: '05:00 PM', value: '05:00 PM' },
+        { label: '06:00 PM', value: '06:00 PM' },
+        { label: '07:00 PM', value: '07:00 PM' },
+        { label: '08:00 PM', value: '08:00 PM' },
+        { label: '09:00 PM', value: '09:00 PM' },
+        { label: '10:00 PM', value: '10:00 PM' },
     ];
+
+    // Helper to convert 12h time string to 24h number for comparison
+    const parse12hTo24h = (timeStr: string): number => {
+        const [time, period] = timeStr.split(' ');
+        let hour = parseInt(time);
+        if (period === 'PM' && hour !== 12) hour += 12;
+        if (period === 'AM' && hour === 12) hour = 0;
+        return hour;
+    };
 
     const availableTimeOptions = [
         { label: 'Select Time', value: '' },
         ...allTimeOptions.filter(opt => {
             if (date === todayStr) {
-                return parseInt(opt.value) > currentHour;
+                return parse12hTo24h(opt.value) > currentHour;
             }
             return true;
         })

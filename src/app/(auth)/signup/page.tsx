@@ -18,6 +18,7 @@ export default function SignupPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isOwner, setIsOwner] = useState(false);
 
     const checkAndCreateUser = async (user: any) => {
         try {
@@ -27,7 +28,7 @@ export default function SignupPage() {
                     uid: user.uid,
                     name: user.displayName || 'User',
                     email: user.email || '',
-                    role: 'user',
+                    role: isOwner ? 'turf_admin' : 'user',
                     createdAt: new Date().toISOString()
                 });
             }
@@ -99,7 +100,31 @@ export default function SignupPage() {
                 <GlassCard className="w-full max-w-md p-8 space-y-8 relative z-10 border-white/10">
                     <div className="text-center space-y-2">
                         <h1 className="text-3xl font-bold text-white">Create Account</h1>
-                        <p className="text-gray-400">Join the community and start playing</p>
+                        <p className="text-gray-400">{isOwner ? 'List your turfs and manage bookings' : 'Join the community and start playing'}</p>
+                    </div>
+
+                    {/* Player / Owner Toggle */}
+                    <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
+                        <button
+                            type="button"
+                            onClick={() => setIsOwner(false)}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${!isOwner
+                                    ? 'bg-[var(--turf-green)] text-white shadow-lg'
+                                    : 'text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            🏏 I'm a Player
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsOwner(true)}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${isOwner
+                                    ? 'bg-[var(--turf-green)] text-white shadow-lg'
+                                    : 'text-gray-400 hover:text-white'
+                                }`}
+                        >
+                            🏟️ I'm a Turf Owner
+                        </button>
                     </div>
 
                     <form onSubmit={handleSignup} className="space-y-6">

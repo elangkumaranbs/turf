@@ -36,10 +36,12 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, initialDate, initialT
     // Generate next 7 days
     const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
-    // Generate slots from 6 AM to 10 PM
+    // Generate slots from 6 AM to 10 PM in 12-hour format
     const timeSlots = Array.from({ length: 17 }, (_, i) => {
-        const hour = i + 6;
-        return `${hour.toString().padStart(2, '0')}:00`;
+        const hour24 = i + 6;
+        const period = hour24 >= 12 ? 'PM' : 'AM';
+        const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+        return `${hour12.toString().padStart(2, '0')}:00 ${period}`;
     });
 
     useEffect(() => {
@@ -58,7 +60,10 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, initialDate, initialT
     };
 
     const isSlotPast = (time: string) => {
-        const [hours, minutes] = time.split(':').map(Number);
+        const [timePart, period] = time.split(' ');
+        let [hours, minutes] = timePart.split(':').map(Number);
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
         const slotDate = new Date(selectedDate);
         slotDate.setHours(hours, minutes, 0, 0);
         return slotDate < new Date();
