@@ -28,8 +28,8 @@ export default function AboutPage() {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[400px] md:h-[500px]">
                     <div className="md:col-span-8 relative rounded-3xl overflow-hidden group">
                         <Image 
-                            src="https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?q=80&w=2000&auto=format&fit=crop"
-                            alt="Football match"
+                            src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop"
+                            alt="Cricket match"
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-700"
                         />
