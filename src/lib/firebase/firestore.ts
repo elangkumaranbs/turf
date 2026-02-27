@@ -42,9 +42,54 @@ export interface Booking {
     status: 'confirmed' | 'cancelled' | 'pending';
 }
 
+// ─── Location Interface ────────────────────────────────────────────
+export interface Location {
+    id: string;
+    name: string;
+    createdAt: string;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  TURF OPERATIONS (fully dynamic — no hardcoded data)
 // ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOCATION OPERATIONS
+// ═══════════════════════════════════════════════════════════════════
+
+export const getLocations = async (): Promise<Location[]> => {
+    try {
+        const locRef = collection(db, 'locations');
+        const locSnapshot = await getDocs(locRef);
+        return locSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
+    } catch (error) {
+        console.error("Error fetching locations:", error);
+        return [];
+    }
+};
+
+export const addLocation = async (name: string): Promise<string> => {
+    try {
+        const locRef = collection(db, 'locations');
+        const docRef = await addDoc(locRef, {
+            name,
+            createdAt: new Date().toISOString()
+        });
+        return docRef.id;
+    } catch (error) {
+        console.error("Error adding location:", error);
+        throw error;
+    }
+};
+
+export const deleteLocation = async (id: string): Promise<void> => {
+    try {
+        await deleteDoc(doc(db, 'locations', id));
+    } catch (error) {
+        console.error("Error deleting location:", error);
+        throw error;
+    }
+};
 
 export const getTurfs = async (): Promise<Turf[]> => {
     try {
@@ -438,5 +483,69 @@ export const getUserById = async (userId: string): Promise<any | null> => {
     } catch (error) {
         console.error("Error fetching user by ID:", error);
         return null;
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  TURF OWNER REQUESTS (Contact Form)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface TurfOwnerRequest {
+    id?: string;
+    name: string;
+    email: string;
+    phone: string;
+    turfName: string;
+    location: string;
+    message?: string;
+    status: 'pending' | 'reviewed' | 'approved' | 'rejected';
+    createdAt: string;
+}
+
+export const submitOwnerRequest = async (requestData: Omit<TurfOwnerRequest, 'id' | 'status' | 'createdAt'>): Promise<string> => {
+    try {
+        const requestsCol = collection(db, 'turf_owner_requests');
+        const newDoc = await addDoc(requestsCol, {
+            ...requestData,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        });
+        return newDoc.id;
+    } catch (error) {
+        console.error("Error submitting owner request:", error);
+        throw error;
+    }
+};
+
+export const getOwnerRequests = async (): Promise<TurfOwnerRequest[]> => {
+    try {
+        const requestsCol = collection(db, 'turf_owner_requests');
+        const snapshot = await getDocs(requestsCol);
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TurfOwnerRequest));
+        data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return data;
+    } catch (error) {
+        console.error("Error fetching owner requests:", error);
+        return [];
+    }
+};
+
+export const updateOwnerRequestStatus = async (requestId: string, status: TurfOwnerRequest['status']): Promise<void> => {
+    try {
+        const reqRef = doc(db, 'turf_owner_requests', requestId);
+        await updateDoc(reqRef, { status, updatedAt: new Date().toISOString() });
+    } catch (error) {
+        console.error("Error updating owner request status:", error);
+        throw error;
+    }
+};
+
+export const deleteOwnerRequest = async (requestId: string): Promise<void> => {
+    try {
+        const reqRef = doc(db, 'turf_owner_requests', requestId);
+        await deleteDoc(reqRef);
+    } catch (error) {
+        console.error("Error deleting owner request:", error);
+        throw error;
     }
 };

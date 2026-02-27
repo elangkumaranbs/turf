@@ -140,31 +140,40 @@ export default function OwnerDashboardPage() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Owner Dashboard</h1>
-                <p className="text-gray-400 mt-1">Welcome back, {user?.displayName || 'Owner'}</p>
+            <div className="mb-10 animate-fade-up">
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Owner <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Dashboard</span>
+                </h1>
+                <p className="text-gray-400 mt-2 text-lg">Welcome back, {user?.displayName || 'Owner'}. Here's what's happening today.</p>
             </div>
 
             {/* Stats Grid */}
             {loading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 animate-pulse">
                     {[1, 2, 3, 4, 5, 6].map(i => <SkeletonStats key={i} />)}
                 </div>
             ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {statCards.map((card) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                    {statCards.map((card, index) => {
                         const Icon = card.icon;
                         return (
-                            <GlassCard key={card.label} className={`p-6 border ${card.border}`}>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className={`p-3 rounded-xl ${card.bg}`}>
-                                        <Icon size={22} className={card.color} />
+                            <GlassCard 
+                                key={card.label} 
+                                className={`p-6 sm:p-7 border ${card.border} hover:scale-105 transition-all duration-300 animate-fade-up relative overflow-hidden group`}
+                                style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                                <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full ${card.bg} blur-2xl opacity-50 group-hover:opacity-100 transition-opacity`} />
+                                <div className="flex items-center justify-between mb-4 relative z-10">
+                                    <div className={`p-3.5 rounded-2xl ${card.bg} backdrop-blur-md border ${card.border} shadow-lg`}>
+                                        <Icon size={24} className={card.color} />
                                     </div>
                                 </div>
-                                <p className="text-sm text-gray-400">{card.label}</p>
-                                <p className={`text-2xl sm:text-3xl font-bold mt-1 ${card.color}`}>
-                                    {card.value}
-                                </p>
+                                <div className="relative z-10">
+                                    <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{card.label}</p>
+                                    <p className={`text-3xl sm:text-4xl font-black mt-2 leading-none ${card.color}`}>
+                                        {card.value}
+                                    </p>
+                                </div>
                             </GlassCard>
                         );
                     })}
@@ -172,33 +181,35 @@ export default function OwnerDashboardPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 pt-4 animate-fade-up" style={{ animationDelay: '0.6s' }}>
                 <Link href="/owner/courts/add">
-                    <GlassCard className="p-6 border-[var(--turf-green)]/20 hover:border-[var(--turf-green)]/50 transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                            <div className="p-4 rounded-xl bg-[var(--turf-green)]/10">
-                                <PlusCircle size={28} className="text-[var(--turf-green)]" />
+                    <GlassCard className="h-full p-6 sm:p-8 border-[var(--turf-green)]/30 bg-gradient-to-br from-[var(--turf-green)]/5 to-transparent hover:border-[var(--turf-green)]/60 transition-all cursor-pointer group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--turf-green)]/10 blur-3xl rounded-full" />
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/20 shadow-[0_0_15px_rgba(46,204,113,0.2)] group-hover:scale-110 transition-transform">
+                                <PlusCircle size={32} className="text-[var(--turf-green)]" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-white group-hover:text-[var(--turf-green)] transition-colors">Add New Court</h3>
-                                <p className="text-sm text-gray-400">List your turf and start accepting bookings</p>
+                                <h3 className="text-xl font-bold text-white group-hover:text-[var(--turf-green)] transition-colors mb-1">Add New Court</h3>
+                                <p className="text-sm text-gray-400 font-medium leading-relaxed">List a new turf and start accepting premium bookings today.</p>
                             </div>
-                            <ArrowRight size={20} className="text-gray-600 group-hover:text-[var(--turf-green)] transition-colors" />
+                            <ArrowRight size={24} className="text-gray-600 group-hover:text-[var(--turf-green)] group-hover:translate-x-1 transition-all" />
                         </div>
                     </GlassCard>
                 </Link>
 
                 <Link href="/owner/bookings">
-                    <GlassCard className="p-6 border-blue-500/20 hover:border-blue-500/50 transition-all cursor-pointer group">
-                        <div className="flex items-center gap-4">
-                            <div className="p-4 rounded-xl bg-blue-500/10">
-                                <CalendarDays size={28} className="text-blue-400" />
+                    <GlassCard className="h-full p-6 sm:p-8 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-transparent hover:border-blue-500/60 transition-all cursor-pointer group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl rounded-full" />
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="p-4 sm:p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform">
+                                <CalendarDays size={32} className="text-blue-400" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">View Bookings</h3>
-                                <p className="text-sm text-gray-400">See all bookings across your courts</p>
+                                <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors mb-1">View All Bookings</h3>
+                                <p className="text-sm text-gray-400 font-medium leading-relaxed">Manage your schedule, view upcoming slots, and track daily activity.</p>
                             </div>
-                            <ArrowRight size={20} className="text-gray-600 group-hover:text-blue-400 transition-colors" />
+                            <ArrowRight size={24} className="text-gray-600 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
                         </div>
                     </GlassCard>
                 </Link>

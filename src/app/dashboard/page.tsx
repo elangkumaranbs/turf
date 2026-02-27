@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { getBookingsByUser, Booking, getTurfById } from '@/lib/firebase/firestore';
-import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, DollarSign, CalendarCheck, Star } from 'lucide-react';
+import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, DollarSign, CalendarCheck, Star, User as UserIcon, LogOut, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { SkeletonStats, SkeletonBooking } from '@/components/ui/SkeletonLoader';
 
@@ -67,28 +67,29 @@ export default function DashboardPage() {
 
     if (authLoading || loading) {
         return (
-            <main className="min-h-screen bg-[#0a0a0a] pb-12">
+            <main className="min-h-screen bg-[var(--background)] pb-12 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none" />
                 <Navbar />
-                <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 sm:mb-8">
+                <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32 relative z-10">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 sm:mb-8 animate-fade-up">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-white">My Dashboard</h1>
-                            <p className="text-sm sm:text-base text-gray-400 mt-1">Loading...</p>
+                            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">My Dashboard</h1>
+                            <p className="text-sm sm:text-base text-emerald-400 mt-1 font-medium">Loading your profile...</p>
                         </div>
                     </div>
                     
                     {/* Stats Grid Skeleton */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10 animate-pulse">
                         {[1, 2, 3, 4].map(i => <SkeletonStats key={i} />)}
                     </div>
                     
                     {/* Bookings Skeleton */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                        <div className="lg:col-span-1">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+                        <div className="lg:col-span-1 hidden lg:block animate-pulse">
                             <SkeletonStats />
                         </div>
-                        <div className="lg:col-span-2 space-y-4">
-                            <h2 className="text-xl sm:text-2xl font-bold text-white">Recent Bookings</h2>
+                        <div className="lg:col-span-2 space-y-4 sm:space-y-6 animate-pulse">
+                            <h2 className="text-2xl font-bold text-white">Recent Bookings</h2>
                             {[1, 2, 3].map(i => <SkeletonBooking key={i} />)}
                         </div>
                     </div>
@@ -158,29 +159,35 @@ export default function DashboardPage() {
     ];
 
     return (
-        <main className="min-h-screen bg-[#0a0a0a] pb-12">
+        <main className="min-h-screen bg-[var(--background)] pb-12 relative overflow-hidden">
+            {/* Background elements */}
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[var(--turf-green)]/10 rounded-full blur-[120px] pointer-events-none animate-float" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-float" style={{ animationDelay: '2s' }} />
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none mix-blend-overlay" />
+            
             <Navbar />
-            <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6 sm:mb-8">
+            
+            <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-28 lg:pt-32 relative z-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 sm:mb-10 animate-fade-up">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-white">My Dashboard</h1>
-                        <p className="text-sm sm:text-base text-gray-400 mt-1">Welcome back, {user?.displayName || 'Player'}</p>
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">My Dashboard</h1>
+                        <p className="text-base sm:text-lg text-emerald-400 mt-2 font-medium">Welcome back, {user?.displayName || 'Player'}</p>
                     </div>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                    {statCards.map((card) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
+                    {statCards.map((card, index) => {
                         const Icon = card.icon;
                         return (
-                            <GlassCard key={card.label} className={`p-4 sm:p-5 border ${card.border}`}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className={`p-2 sm:p-2.5 rounded-xl ${card.bg}`}>
-                                        <Icon size={18} className={card.color} />
+                            <GlassCard key={card.label} className={`p-5 sm:p-6 border-l-4 ${card.border} animate-fade-up`} style={{ animationDelay: `${index * 0.1}s` }}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-3 rounded-2xl ${card.bg} shadow-inner`}>
+                                        <Icon size={22} className={card.color} />
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-400 mb-1">{card.label}</p>
-                                <p className={`text-xl sm:text-2xl font-bold ${card.color}`}>
+                                <p className="text-sm text-gray-400 font-medium mb-1">{card.label}</p>
+                                <p className={`text-2xl sm:text-3xl font-bold ${card.color} tracking-tight`}>
                                     {card.value}
                                 </p>
                             </GlassCard>
@@ -188,82 +195,102 @@ export default function DashboardPage() {
                     })}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
                     {/* Stats / Sidebar */}
-                    <div className="lg:col-span-1 space-y-4 sm:space-y-6">
-                        <GlassCard className="p-4 sm:p-6 border-white/10">
-                            <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Profile</h3>
-                            <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                                <div className="flex justify-between gap-2">
-                                    <span className="text-gray-400">Email</span>
-                                    <span className="text-white text-right truncate max-w-[60%]">{user?.email}</span>
+                    <div className="lg:col-span-1 space-y-6 sm:space-y-8 animate-fade-up" style={{ animationDelay: '0.4s' }}>
+                        <GlassCard className="p-6 sm:p-8 border-white/5">
+                            <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                <UserIcon className="w-5 h-5 text-emerald-400" /> Profile
+                            </h3>
+                            <div className="space-y-4 text-sm sm:text-base">
+                                <div className="flex flex-col gap-1 pb-3 border-b border-white/5">
+                                    <span className="text-gray-500 font-medium">Email</span>
+                                    <span className="text-white font-medium truncate">{user?.email}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-400">Member Since</span>
-                                    <span className="text-white">Jan 2024</span>
+                                <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                                    <span className="text-gray-500 font-medium">Member Since</span>
+                                    <span className="text-white font-medium">Jan 2024</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-400">Role</span>
-                                    <span className="text-white capitalize">{user?.role}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-500 font-medium">Role</span>
+                                    <span className="text-emerald-400 font-bold capitalize bg-emerald-500/10 px-3 py-1 rounded-full">{user?.role}</span>
                                 </div>
                             </div>
                             <button
                                 onClick={logout}
-                                className="w-full mt-4 text-xs text-red-400 hover:text-red-300 border border-red-500/20 hover:bg-red-500/10 py-2 rounded-lg transition-colors"
+                                className="w-full mt-8 text-sm sm:text-base font-bold text-red-400 hover:text-white border border-red-500/30 hover:bg-red-500 hover:border-red-500 py-3 rounded-xl transition-all flex justify-center items-center gap-2"
                             >
-                                Log Out
+                                <LogOut size={16} /> Log Out
                             </button>
                         </GlassCard>
 
                         {/* Most Visited Location */}
                         {mostVisited && (
-                            <GlassCard className="p-4 sm:p-6 border-white/10">
-                                <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
-                                    <Star className="w-5 h-5 text-yellow-400" />
+                            <GlassCard className="p-6 sm:p-8 border-yellow-500/10 bg-yellow-500/5">
+                                <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <Star className="w-6 h-6 text-yellow-500 fill-yellow-500/20" />
                                     Most Visited
                                 </h3>
-                                <div className="space-y-2">
-                                    <div className="flex items-start gap-2">
-                                        <MapPin className="w-4 h-4 text-[var(--turf-green)] mt-1 shrink-0" />
-                                        <div>
-                                            <p className="text-sm text-white font-medium">{mostVisited[0]}</p>
-                                            <p className="text-xs text-gray-400 mt-1">{mostVisited[1]} booking{mostVisited[1] > 1 ? 's' : ''}</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-4">
+                                        <div className="bg-white/5 p-3 rounded-xl">
+                                            <MapPin className="w-6 h-6 text-[var(--turf-green)]" />
+                                        </div>
+                                        <div className="flex-1 mt-1">
+                                            <p className="text-lg text-white font-bold leading-tight">{mostVisited[0]}</p>
+                                            <p className="text-sm text-emerald-400 font-medium mt-1">{mostVisited[1]} booking{mostVisited[1] > 1 ? 's' : ''}</p>
                                         </div>
                                     </div>
                                 </div>
                             </GlassCard>
                         )}
 
-                        {/* Admin Actions - Visible to Admins (or all for demo simplicity if needed, but keeping logic strict) */}
+                        {/* Admin Actions */}
                         {(user?.role === 'turf_admin' || user?.role === 'super_admin') && (
-                            <GlassCard className="p-4 sm:p-6 border-[var(--turf-green)]/20 bg-[var(--turf-green)]/5">
-                                <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Owner Console</h3>
-                                <div className="space-y-2 sm:space-y-3">
+                            <GlassCard className="p-6 sm:p-8 border-[var(--turf-green)]/30 bg-gradient-to-br from-[var(--turf-green)]/10 to-transparent">
+                                <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <ShieldCheck className="w-6 h-6 text-[var(--turf-green)]" /> Owner Console
+                                </h3>
+                                <div className="space-y-3 sm:space-y-4">
                                     <button
                                         onClick={() => router.push('/owner')}
-                                        className="w-full bg-[var(--turf-green)] text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                                        className="w-full bg-[var(--turf-green)] text-black px-4 py-3 rounded-xl font-bold hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(46,204,113,0.4)] transition-all flex items-center justify-center gap-2"
                                     >
-                                        <Plus className="w-4 h-4" /> Owner Panel
+                                        <Plus className="w-5 h-5" /> Owner Panel
                                     </button>
                                     <button
                                         onClick={() => router.push('/owner/courts/add')}
-                                        className="w-full bg-white/10 text-white px-4 py-2 rounded-lg font-medium hover:bg-white/20 transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl font-medium hover:bg-white/10 transition-all"
                                     >
                                         Add New Court
                                     </button>
                                     <button
                                         onClick={() => router.push('/owner/bookings')}
-                                        className="w-full bg-white/10 text-white px-4 py-2 rounded-lg font-medium hover:bg-white/20 transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 text-white px-4 py-3 rounded-xl font-medium hover:bg-white/10 transition-all"
                                     >
                                         Manage Bookings
                                     </button>
                                     {user?.role === 'super_admin' && (
-                                        <button
-                                            onClick={() => router.push('/admin/users')}
-                                            className="w-full bg-purple-500/10 text-purple-400 border border-purple-500/20 px-4 py-2 rounded-lg font-medium hover:bg-purple-500/20 transition-colors"
-                                        >
-                                            Manage Users (Super Admin)
-                                        </button>
+                                        <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
+                                            <button
+                                                onClick={() => router.push('/admin/users')}
+                                                className="w-full bg-purple-500/10 text-purple-400 border border-purple-500/30 px-4 py-3 rounded-xl font-bold hover:bg-purple-500/20 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all"
+                                            >
+                                                Manage Users (Super Admin)
+                                            </button>
+                                            <button
+                                                onClick={() => router.push('/admin/courts')}
+                                                className="w-full bg-orange-500/10 text-orange-400 border border-orange-500/30 px-4 py-3 rounded-xl font-bold hover:bg-orange-500/20 hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all"
+                                            >
+                                                Manage Courts (Super Admin)
+                                            </button>
+                                            <button
+                                                onClick={() => router.push('/admin/requests')}
+                                                className="w-full bg-blue-500/10 text-blue-400 border border-blue-500/30 px-4 py-3 rounded-xl font-bold hover:bg-blue-500/20 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
+                                            >
+                                                Partner Requests
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </GlassCard>
@@ -271,39 +298,51 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Bookings List */}
-                    <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-                        <h2 className="text-xl sm:text-2xl font-bold text-white">Recent Bookings</h2>
+                    <div className="lg:col-span-2 space-y-6 sm:space-y-8 animate-fade-up" style={{ animationDelay: '0.6s' }}>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                            <CalendarCheck className="w-7 h-7 text-blue-400" /> Recent Bookings
+                        </h2>
+                        
                         {bookings.length === 0 ? (
-                            <GlassCard className="p-8 sm:p-12 text-center border-white/10 flex flex-col items-center">
-                                <AlertCircle className="w-12 h-12 text-gray-500 mb-4" />
-                                <h3 className="text-xl text-white font-medium">No bookings yet</h3>
-                                <p className="text-gray-400 mt-2 mb-6">Start your journey by booking a turf today.</p>
+                            <GlassCard className="p-10 sm:p-16 text-center border-white/5 flex flex-col items-center justify-center bg-white/[0.02]">
+                                <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                                    <AlertCircle className="w-12 h-12 text-gray-500" />
+                                </div>
+                                <h3 className="text-2xl text-white font-bold">No bookings yet</h3>
+                                <p className="text-gray-400 text-lg mt-3 mb-8 max-w-md mx-auto">Start your journey by finding and booking a premium turf today.</p>
                                 <button
                                     onClick={() => router.push('/turfs')}
-                                    className="bg-[var(--turf-green)] text-white px-6 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors"
+                                    className="bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black px-8 py-3.5 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(46,204,113,0.4)] hover:scale-105 transition-all text-lg"
                                 >
                                     Browse Turfs
                                 </button>
                             </GlassCard>
                         ) : (
-                            <div className="space-y-4">
-                                {bookings.map((booking) => (
-                                    <GlassCard key={booking.id} className="p-4 sm:p-6 border-white/10 flex flex-col md:flex-row gap-4 sm:gap-6 md:items-center justify-between group hover:border-[var(--turf-green)]/30 transition-all">
-                                        <div className="space-y-2">
-                                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[var(--turf-green)] transition-colors">
+                            <div className="space-y-5">
+                                {bookings.map((booking, index) => (
+                                    <GlassCard key={booking.id} className="p-5 sm:p-6 border-white/5 flex flex-col sm:flex-row gap-5 sm:gap-6 sm:items-center justify-between group hover:border-[var(--turf-green)]/40 hover:bg-white/[0.03] transition-all" style={{ animationDelay: `${index * 0.1}s` }}>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="flex justify-between items-start sm:hidden mb-2">
+                                                <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                                                    booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'
+                                                    }`}>
+                                                    {booking.status}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-[var(--turf-green)] transition-colors">
                                                 {booking.turfName}
                                             </h3>
-                                            <div className="flex items-center text-gray-400 text-xs sm:text-sm">
-                                                <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 shrink-0" />
+                                            <div className="flex items-center text-gray-400 text-sm sm:text-base font-medium">
+                                                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[var(--turf-green)] shrink-0" />
                                                 <span className="truncate">{booking.location}</span>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm pt-2">
-                                                <div className="flex items-center text-white bg-white/5 px-3 py-1 rounded-full">
-                                                    <Calendar className="w-3 h-3 mr-2 text-[var(--turf-green)]" />
+                                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                                                <div className="flex items-center text-white bg-white/10 px-4 py-1.5 rounded-lg text-sm font-medium">
+                                                    <Calendar className="w-4 h-4 mr-2 text-blue-400" />
                                                     {format(new Date(booking.date), 'MMM d, yyyy')}
                                                 </div>
-                                                <div className="flex items-center text-white bg-white/5 px-3 py-1 rounded-full">
-                                                    <Clock className="w-3 h-3 mr-2 text-[var(--turf-green)]" />
+                                                <div className="flex items-center text-white bg-white/10 px-4 py-1.5 rounded-lg text-sm font-medium">
+                                                    <Clock className="w-4 h-4 mr-2 text-orange-400" />
                                                     {booking.times && booking.times.length > 0
                                                         ? booking.times.join(', ')
                                                         : booking.time || 'N/A'
@@ -311,12 +350,13 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex md:flex-col items-center gap-2 md:items-end">
-                                            <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border border-green-500/20' :
-                                                booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
+                                        <div className="hidden sm:flex flex-col items-end gap-3 min-w-[120px]">
+                                            <span className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                                                booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'
                                                 }`}>
                                                 {booking.status}
                                             </span>
+                                            <span className="text-sm font-bold text-white bg-white/5 px-3 py-1 rounded-md">#{booking.id?.slice(-6).toUpperCase() || 'ID'}</span>
                                         </div>
                                     </GlassCard>
                                 ))}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -10,24 +10,26 @@ import { Select } from '@/components/ui/Select';
 import { addTurf } from '@/lib/firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase/config';
-import { Plus, X, Upload, CheckCircle, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Upload, CheckCircle, Link as LinkIcon, Image as ImageIcon, MapPin } from 'lucide-react';
+import { getLocations, Location } from '@/lib/firebase/firestore';
 
-const CITY_OPTIONS = [
-    { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
-    { label: 'Erode', value: 'Erode' },
-    { label: 'Coimbatore', value: 'Coimbatore' },
-    { label: 'Chennai', value: 'Chennai' },
-    { label: 'Salem', value: 'Salem' },
-    { label: 'Tiruppur', value: 'Tiruppur' },
-    { label: 'Madurai', value: 'Madurai' },
-    { label: 'Trichy', value: 'Trichy' },
-];
+
 
 export default function AddCourtPage() {
     const { user } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [locations, setLocations] = useState<{label: string, value: string}[]>([]);
+
+    useEffect(() => {
+        const fetchLocations = async () => {
+            const data = await getLocations();
+            const options = data.map(loc => ({ label: loc.name, value: loc.name })).sort((a, b) => a.label.localeCompare(b.label));
+            setLocations(options);
+        };
+        fetchLocations();
+    }, []);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -142,18 +144,24 @@ export default function AddCourtPage() {
     }
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Add New Court</h1>
-                <p className="text-gray-400 mt-1">Fill in the details to list your turf</p>
+        <div className="space-y-8 animate-fade-up">
+            <div className="mb-8">
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    Add New <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Court</span>
+                </h1>
+                <p className="text-gray-400 mt-2 text-lg">List your premium turf and start accepting bookings.</p>
             </div>
 
-            <GlassCard className="p-4 sm:p-6 lg:p-8 border-white/10">
-                <form onSubmit={handleSubmit} className="space-y-6">
+            <GlassCard className="p-6 sm:p-8 lg:p-10 border-white/5 bg-white/[0.02] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--turf-green)]/5 blur-3xl rounded-full pointer-events-none" />
+                <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                     {/* Basic Info */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">Basic Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <h3 className="text-xl font-bold text-white border-b border-white/5 pb-3 flex items-center gap-2">
+                            <span className="bg-[var(--turf-green)]/10 text-[var(--turf-green)] p-1.5 rounded-lg"><MapPin size={18} /></span>
+                            Basic Information
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
                             <Input
                                 label="Court Name"
                                 placeholder="e.g. Green Field Turf"
@@ -165,7 +173,9 @@ export default function AddCourtPage() {
                                 label="City"
                                 value={formData.city}
                                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                options={CITY_OPTIONS}
+                                options={locations.length > 0 
+                                    ? [{ label: 'Select a City', value: '' }, ...locations] 
+                                    : [{ label: 'Loading locations...', value: '' }]}
                                 required
                             />
                         </div>
@@ -177,9 +187,9 @@ export default function AddCourtPage() {
                             required
                         />
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300 ml-1">Description</label>
+                            <label className="text-sm font-medium text-gray-300 ml-1 block mb-1">Description</label>
                             <textarea
-                                className="flex w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-gray-500 focus:border-[var(--turf-green)] focus:ring-1 focus:ring-[var(--turf-green)] focus:outline-none transition-all h-24 resize-none"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 focus:border-[var(--turf-green)]/50 focus:ring-1 focus:ring-[var(--turf-green)]/30 outline-none transition-all resize-none min-h-[120px]"
                                 placeholder="Describe your court, facilities, and what makes it special..."
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -406,11 +416,23 @@ export default function AddCourtPage() {
                             </div>
                         )}
                     </div>
-
                     {/* Submit */}
-                    <Button type="submit" className="w-full h-12 text-lg" isLoading={loading}>
-                        {loading ? 'Creating Court...' : 'Add Court'}
-                    </Button>
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 hover:from-emerald-500 hover:to-[var(--turf-green)] text-black px-6 py-4 rounded-xl font-black text-lg transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-[0_0_30px_rgba(46,204,113,0.4)] hover:scale-[1.01] disabled:opacity-70 disabled:cursor-not-allowed mt-8"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                Creating Court...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={22} /> Add Premium Court
+                            </>
+                        )}
+                    </button>
                 </form>
             </GlassCard>
         </div>

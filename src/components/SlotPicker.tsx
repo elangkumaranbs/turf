@@ -124,7 +124,7 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                             <button
                                 key={date.toISOString()}
                                 onClick={() => { setSelectedDate(date); setSelectedTimes([]); }}
-                                className={`flex flex-col items-center justify-center min-w-[70px] p-3 rounded-xl border transition-all ${isSelected
+                                className={`flex flex-col items-center justify-center min-w-[72px] sm:min-w-[80px] p-3 rounded-xl border transition-all ${isSelected
                                     ? 'bg-[var(--turf-green)] border-[var(--turf-green)] text-black'
                                     : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/30'
                                     }`}
@@ -150,7 +150,7 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                 {loading ? (
                     <div className="flex justify-center p-8"><Loader2 className="animate-spin text-[var(--turf-green)]" /></div>
                 ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                         {timeSlots.map((time) => {
                             const booked = isSlotBooked(time);
                             const past = isSlotPast(time);
@@ -162,7 +162,7 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                                     key={time}
                                     disabled={isDisabled}
                                     onClick={() => toggleSlot(time)}
-                                    className={`p-2 rounded-lg text-sm font-medium border transition-all ${isDisabled
+                                    className={`p-2.5 sm:p-2 rounded-lg text-sm sm:text-base font-medium border transition-all ${isDisabled
                                         ? 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed opacity-50'
                                         : isSelected
                                             ? 'bg-[var(--turf-green)] border-[var(--turf-green)] text-black shadow-[0_0_15px_rgba(46,204,113,0.4)]'

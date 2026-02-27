@@ -10,16 +10,19 @@ export const Hero = () => {
     return (
         <section className="relative min-h-[calc(100vh-80px)] sm:min-h-screen w-full flex items-center justify-center pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 overflow-hidden">
             {/* Background Image with Overlay */}
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
                 <Image
                     src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=2000&auto=format&fit=crop"
                     alt="Stadium Background"
                     fill
-                    className="object-cover"
+                    className="object-cover opacity-100"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/40" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-black/60" />
+                
+                {/* Glowing Orbs */}
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--turf-green)]/10 rounded-full blur-[120px] mix-blend-screen animate-float" />
+                <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[150px] mix-blend-screen animate-float" style={{ animationDelay: '2s' }} />
             </div>
 
             <div className="container mx-auto px-4 sm:px-6 relative z-10 flex flex-col items-center text-center">
@@ -49,8 +52,8 @@ export const Hero = () => {
                     <motion.button
                         onClick={() => router.push('/turfs')}
                         whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="mt-4 px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-xl bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black shadow-lg shadow-[var(--turf-green)]/25 hover:shadow-[var(--turf-green)]/40 transition-shadow cursor-pointer w-full sm:w-auto max-w-xs mx-auto"
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-4 px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-bold rounded-2xl bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black shadow-lg shadow-[var(--turf-green)]/20 hover:shadow-[var(--turf-green)]/40 hover:ring-2 hover:ring-white/20 transition-all cursor-pointer w-full sm:w-auto max-w-xs mx-auto animate-pulse-glow"
                     >
                         Book Now
                     </motion.button>

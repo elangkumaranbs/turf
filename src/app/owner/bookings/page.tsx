@@ -47,24 +47,28 @@ export default function OwnerBookingsPage() {
     }
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Bookings</h1>
-                <p className="text-gray-400 mt-1">{bookings.length} total booking{bookings.length !== 1 ? 's' : ''} across your courts</p>
+        <div className="space-y-8 animate-fade-up">
+            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                        My <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Bookings</span>
+                    </h1>
+                    <p className="text-gray-400 mt-2 text-lg">{bookings.length} total booking{bookings.length !== 1 ? 's' : ''} across your courts</p>
+                </div>
             </div>
 
             {/* Filters */}
-            <GlassCard className="p-3 sm:p-4 border-white/10">
-                <div className="flex flex-col gap-3 sm:gap-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <Filter size={16} />
+            <GlassCard className="p-4 sm:p-5 border-white/5 bg-white/[0.02]">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <div className="flex items-center gap-2 text-gray-400 font-medium">
+                        <Filter size={18} className="text-blue-400" />
                         <span>Filters:</span>
                     </div>
-                    <div className="flex flex-wrap gap-3 flex-1">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-3 flex-1 w-full relative z-10">
                         <select
                             value={filterTurf}
                             onChange={(e) => setFilterTurf(e.target.value)}
-                            className="h-10 appearance-none rounded-lg border border-white/10 bg-white/5 px-4 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none"
+                            className="h-11 appearance-none rounded-xl border border-white/10 bg-white/5 px-4 pr-10 text-sm font-medium text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 focus:outline-none transition-all cursor-pointer w-full sm:w-auto flex-1 sm:flex-none"
                         >
                             <option value="all" className="bg-[#1a1a1a]">All Courts</option>
                             {turfs.map(t => (
@@ -75,29 +79,31 @@ export default function OwnerBookingsPage() {
                             type="date"
                             value={filterDate}
                             onChange={(e) => setFilterDate(e.target.value)}
-                            className="h-10 rounded-lg border border-white/10 bg-white/5 px-4 text-sm text-white focus:border-[var(--turf-green)] focus:outline-none"
+                            className="h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 focus:outline-none transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert w-full sm:w-auto"
                         />
                         {(filterTurf !== 'all' || filterDate) && (
                             <button
                                 onClick={() => { setFilterTurf('all'); setFilterDate(''); }}
-                                className="h-10 px-4 rounded-lg text-sm text-gray-400 border border-white/10 hover:bg-white/5 transition-colors"
+                                className="h-11 px-5 rounded-xl text-sm font-bold text-gray-300 border border-white/10 hover:bg-white/10 hover:text-white transition-all shadow-sm w-full sm:w-auto"
                             >
-                                Clear
+                                Clear Filters
                             </button>
                         )}
                     </div>
-                    <p className="text-sm text-gray-500">
-                        Showing {filteredBookings.length} of {bookings.length}
-                    </p>
+                    <div className="text-sm font-medium text-gray-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 mt-2 md:mt-0">
+                        Showing <span className="text-white">{filteredBookings.length}</span> of {bookings.length}
+                    </div>
                 </div>
             </GlassCard>
 
             {/* Bookings List */}
             {filteredBookings.length === 0 ? (
-                <GlassCard className="p-12 text-center border-white/10">
-                    <CalendarDays className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-xl text-white font-medium">No bookings found</h3>
-                    <p className="text-gray-400 mt-2">
+                <GlassCard className="p-12 sm:p-16 text-center border-white/5 w-full max-w-2xl mx-auto mt-8 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="w-24 h-24 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-6">
+                        <CalendarDays className="w-10 h-10 text-blue-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white tracking-tight mb-2">No bookings found</h3>
+                    <p className="text-gray-400 text-lg">
                         {bookings.length === 0
                             ? 'You don\'t have any bookings yet. Once customers book your courts, they\'ll appear here.'
                             : 'No bookings match your current filters.'
@@ -105,47 +111,69 @@ export default function OwnerBookingsPage() {
                     </p>
                 </GlassCard>
             ) : (
-                <div className="space-y-3">
-                    {filteredBookings.map((booking) => (
-                        <GlassCard key={booking.id} className="p-4 sm:p-5 border-white/10 hover:border-white/20 transition-all">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <h4 className="text-white font-semibold">{booking.turfName}</h4>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${booking.status === 'confirmed'
-                                            ? 'bg-green-500/20 text-green-400 border border-green-500/20'
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
+                    {filteredBookings.map((booking, index) => (
+                        <GlassCard 
+                            key={booking.id} 
+                            className="p-5 sm:p-6 border-white/5 bg-white/[0.02] hover:border-blue-500/30 hover:shadow-[0_8px_30px_rgba(59,130,246,0.1)] transition-all duration-300 group animate-fade-up relative overflow-hidden"
+                            style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full pointer-events-none transition-opacity opacity-50 group-hover:opacity-100" />
+                            
+                            <div className="flex flex-col justify-between h-full gap-5 relative z-10">
+                                <div>
+                                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3 border-b border-white/5 pb-3">
+                                        <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{booking.turfName}</h4>
+                                        <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider backdrop-blur-md ${booking.status === 'confirmed'
+                                            ? 'bg-[var(--turf-green)]/10 text-[var(--turf-green)] border border-[var(--turf-green)]/20'
                                             : booking.status === 'pending'
-                                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20'
-                                                : 'bg-red-500/20 text-red-400 border border-red-500/20'
+                                                ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                                                : 'bg-red-500/10 text-red-500 border border-red-500/20'
                                             }`}>
                                             {booking.status}
                                         </span>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                                    <div className="space-y-3">
                                         {booking.city && (
-                                            <span className="flex items-center gap-1">
-                                                <MapPin size={14} className="text-[var(--turf-green)]" />
+                                            <div className="flex items-center gap-2.5 text-sm font-medium text-gray-300">
+                                                <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center">
+                                                    <MapPin size={14} className="text-gray-400" />
+                                                </div>
                                                 {booking.city}
-                                            </span>
+                                            </div>
                                         )}
-                                        <span className="flex items-center gap-1">
-                                            <CalendarDays size={14} className="text-[var(--turf-green)]" />
-                                            {format(new Date(booking.date), 'MMM d, yyyy')}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={14} className="text-[var(--turf-green)]" />
-                                            {booking.times && booking.times.length > 0
-                                                ? booking.times.join(', ')
-                                                : booking.time || 'N/A'
-                                            } ({booking.duration} min)
-                                        </span>
+                                        <div className="flex items-center gap-2.5 text-sm font-medium text-gray-300">
+                                            <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center">
+                                                <CalendarDays size={14} className="text-blue-400" />
+                                            </div>
+                                            {format(new Date(booking.date), 'MMMM d, yyyy')}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2.5 text-sm font-medium text-gray-300">
+                                            <div className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                                                <Clock size={14} className="text-emerald-400" />
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {booking.times && booking.times.length > 0
+                                                    ? booking.times.map((t, i) => (
+                                                        <span key={i} className="bg-white/5 border border-white/10 px-2 py-1 rounded-md text-xs">{t}</span>
+                                                    ))
+                                                    : <span className="bg-white/5 border border-white/10 px-2 py-1 rounded-md text-xs">{booking.time || 'N/A'}</span>
+                                                } 
+                                                <span className="text-gray-500 self-center ml-1">({booking.duration} min)</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="text-right text-sm text-gray-500">
-                                    <p>Player: {booking.userId.slice(0, 8)}...</p>
-                                    <p className="text-xs mt-1">
-                                        Booked {format(new Date(booking.createdAt), 'MMM d, h:mm a')}
-                                    </p>
+                                <div className="mt-2 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500 font-medium">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center text-[10px] text-gray-400 border border-white/10">
+                                            {booking.userId.slice(0, 1).toUpperCase()}
+                                        </div>
+                                        ID: {booking.userId.slice(0, 8)}...
+                                    </div>
+                                    <div className="bg-white/5 px-2 py-1 rounded">
+                                        {format(new Date(booking.createdAt), 'MMM d • h:mm a')}
+                                    </div>
                                 </div>
                             </div>
                         </GlassCard>

@@ -116,6 +116,18 @@ service cloud.firestore {
     }
     
     // ──────────────────────────────────────────────────────────────
+    // LOCATIONS Collection
+    // ──────────────────────────────────────────────────────────────
+    match /locations/{locationId} {
+      // Everyone can read locations (needed for the public search page)
+      allow read: if true;
+      allow list: if true;
+      
+      // Only super admin can manage locations
+      allow write: if isSuperAdmin();
+    }
+    
+    // ──────────────────────────────────────────────────────────────
     // Default: Deny all other collections
     // ──────────────────────────────────────────────────────────────
     match /{document=**} {

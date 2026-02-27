@@ -25,17 +25,20 @@ export const Navbar = () => {
 
     const navLinks = [
         { name: 'Home', href: '/' },
-        { name: 'About', href: '#about' },
-        { name: 'Service', href: '#service' },
+        { name: 'About', href: '/about' },
+        { name: 'Services', href: '/services' },
         { name: 'Courts', href: '/turfs' },
         ...((user?.role === 'turf_admin' || user?.role === 'super_admin')
             ? [{ name: 'Owner Panel', href: '/owner' }]
             : []),
+        ...(user?.role === 'super_admin'
+            ? [{ name: 'Locations', href: '/admin/locations' }]
+            : [])
     ];
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/50 backdrop-blur-md py-3 sm:py-4' : 'bg-transparent py-4 sm:py-6'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-black/60 backdrop-blur-xl border-b border-white/10 py-3 sm:py-4 shadow-2xl shadow-black/50' : 'bg-transparent py-4 sm:py-6'
                 }`}
         >
             <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
@@ -57,7 +60,7 @@ export const Navbar = () => {
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden md:flex items-center space-x-1">
+                <div className="hidden lg:flex items-center space-x-1">
                     <div className="flex bg-white/5 backdrop-blur-sm rounded-full p-1 border border-white/10">
                         {navLinks.map((link) => (
                             <Link
@@ -110,7 +113,7 @@ export const Navbar = () => {
                     )}
 
                     <button
-                        className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        className="lg:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle menu"
                     >
@@ -126,7 +129,7 @@ export const Navbar = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-black/95 backdrop-blur-xl border-t border-white/10 overflow-hidden"
+                        className="lg:hidden bg-black/95 backdrop-blur-xl border-t border-white/10 overflow-hidden shadow-2xl"
                     >
                         <div className="flex flex-col p-4 sm:p-6 space-y-3 sm:space-y-4">
                             {navLinks.map((link) => (
