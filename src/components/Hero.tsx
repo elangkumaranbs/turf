@@ -8,7 +8,7 @@ export const Hero = () => {
     const router = useRouter();
 
     return (
-        <section className="relative min-h-[calc(100vh-80px)] sm:min-h-screen w-full flex items-center justify-center pt-20 sm:pt-24 pb-12 sm:pb-16 px-4 overflow-hidden">
+        <section className="relative min-h-[calc(100vh-80px)] sm:min-h-screen w-full flex items-center justify-center pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 overflow-hidden">
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
                 <Image
@@ -30,7 +30,7 @@ export const Hero = () => {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="space-y-6 sm:space-y-8 max-w-3xl w-full"
+                    className="space-y-4 sm:space-y-8 max-w-3xl w-full"
                 >
                     <div className="inline-block px-3 py-1.5 sm:px-4 rounded-full bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/20 text-[var(--turf-green)] font-medium text-xs sm:text-sm">
                         New: Priority Booking Available
