@@ -211,9 +211,9 @@ export default function ManageUsersPage() {
                         <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30">
                             <Users className="w-6 h-6 text-purple-400" />
                         </div>
-                        <h1 className="text-3xl font-bold text-white">User Management</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white">User Management</h1>
                     </div>
-                    <p className="text-gray-400 ml-14">Manage {users.length} registered user{users.length !== 1 ? 's' : ''} across the platform</p>
+                    <p className="text-gray-400 text-sm sm:text-base sm:ml-14">Manage {users.length} registered user{users.length !== 1 ? 's' : ''} across the platform</p>
                 </div>
                 <Button onClick={() => setShowCreateModal(true)} className="gap-2 w-full sm:w-auto bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-purple-500/20">
                     <UserPlus size={18} /> Create New User
@@ -266,13 +266,13 @@ export default function ManageUsersPage() {
 
             {/* Pending Approvals Alert */}
             {pendingCount > 0 && filterRole !== 'pending_approval' && (
-                <GlassCard className="p-5 border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-yellow-600/5 hover:border-yellow-500/50 transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="p-2.5 rounded-xl bg-yellow-500/20 border border-yellow-500/30">
+                <GlassCard className="p-4 sm:p-5 border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-yellow-600/5 hover:border-yellow-500/50 transition-all duration-300">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1">
+                            <div className="p-2.5 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex-shrink-0">
                                 <Clock className="w-5 h-5 text-yellow-400" />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-yellow-400 font-semibold text-sm">
                                     {pendingCount} account{pendingCount !== 1 ? 's' : ''} awaiting approval
                                 </p>
@@ -281,7 +281,7 @@ export default function ManageUsersPage() {
                         </div>
                         <button
                             onClick={() => setFilterRole('pending_approval')}
-                            className="text-sm font-medium text-yellow-400 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 px-4 py-2 rounded-xl transition-all"
+                            className="w-full sm:w-auto text-sm font-medium text-yellow-400 hover:text-yellow-300 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 px-4 py-2 rounded-xl transition-all text-center flex-shrink-0"
                         >
                             Review Now →
                         </button>
@@ -311,9 +311,10 @@ export default function ManageUsersPage() {
                 )}
             </div>
 
-            {/* Users Table */}
+            {/* Users List - Desktop Table / Mobile Cards */}
             <GlassCard className="overflow-hidden border-white/10 p-0 shadow-xl">
-                <div className="overflow-x-auto">
+                {/* Desktop Table - Hidden on Mobile */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-gradient-to-r from-white/[0.08] to-white/[0.04] text-white font-semibold text-xs border-b border-white/10">
                             <tr>
@@ -428,6 +429,114 @@ export default function ManageUsersPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Mobile Card Layout - Hidden on Desktop */}
+                <div className="lg:hidden divide-y divide-white/5">
+                    {filteredUsers.map((u) => {
+                        const isSelf = u.uid === user?.uid;
+                        const isSuperAdmin = u.email === SUPER_ADMIN_EMAIL;
+                        return (
+                            <div key={u.uid} className={`p-4 hover:bg-white/5 transition-all duration-200 ${ u.role === 'pending_approval' ? 'bg-yellow-500/5' : ''}`}>
+                                {/* User Info */}
+                                <div className="flex items-start gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center font-bold text-white flex-shrink-0">
+                                        {(u.name || u.email || '?').charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-white truncate">{u.name || 'No Name'}</div>
+                                        <div className="text-xs text-gray-400 truncate">{u.email}</div>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Role Badge */}
+                                <div className="mb-3">
+                                    {getRoleBadge(u.role || 'user')}
+                                </div>
+                                
+                                {/* Actions */}
+                                {isSuperAdmin || isSelf ? (
+                                    <span className="inline-block px-3 py-1.5 text-xs text-gray-500 bg-white/5 border border-white/5 rounded-lg italic">Protected Account</span>
+                                ) : (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => openEditModal(u)}
+                                                className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-blue-500/40 hover:bg-blue-500/20 text-blue-400 px-3 py-2.5 rounded-lg transition-all font-medium"
+                                            >
+                                                <Pencil size={13} />
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser(u.uid, u.name || u.email)}
+                                                disabled={actionLoading === u.uid}
+                                                className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-red-500/40 hover:bg-red-500/20 text-red-400 px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                            >
+                                                {actionLoading === u.uid ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                                                Delete
+                                            </button>
+                                        </div>
+                                        
+                                        {/* Role management buttons */}
+                                        {u.role === 'pending_approval' && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleRoleUpdate(u.uid, 'turf_admin')}
+                                                    disabled={actionLoading === u.uid}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-green-500/40 bg-green-500/10 hover:bg-green-500/25 text-green-400 px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 font-medium"
+                                                >
+                                                    {actionLoading === u.uid ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRoleUpdate(u.uid, 'user')}
+                                                    disabled={actionLoading === u.uid}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-red-500/40 bg-red-500/10 hover:bg-red-500/25 text-red-400 px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 font-medium"
+                                                >
+                                                    <XCircle size={13} />
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        )}
+                                        {u.role === 'user' && (
+                                            <button
+                                                onClick={() => handleRoleUpdate(u.uid, 'turf_admin')}
+                                                disabled={actionLoading === u.uid}
+                                                className="w-full flex items-center justify-center gap-1.5 text-xs border border-[var(--turf-green)]/40 hover:bg-[var(--turf-green)]/20 text-[var(--turf-green)] px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 font-medium"
+                                            >
+                                                {actionLoading === u.uid ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
+                                                Make Admin
+                                            </button>
+                                        )}
+                                        {u.role === 'turf_admin' && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleRoleUpdate(u.uid, 'user')}
+                                                    disabled={actionLoading === u.uid}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-gray-500/40 hover:bg-gray-500/20 text-gray-400 px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 font-medium"
+                                                >
+                                                    <ShieldX size={13} />
+                                                    Revoke
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRoleUpdate(u.uid, 'super_admin')}
+                                                    disabled={actionLoading === u.uid}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs border border-purple-500/40 hover:bg-purple-500/20 text-purple-400 px-3 py-2.5 rounded-lg transition-all disabled:opacity-50 font-medium"
+                                                >
+                                                    <Shield size={13} />
+                                                    Super Admin
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
                 {filteredUsers.length === 0 && (
                     <div className="p-16 text-center bg-gradient-to-br from-white/[0.02] to-white/[0.05]">
                         <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 w-fit mx-auto mb-6">
@@ -441,8 +550,8 @@ export default function ManageUsersPage() {
 
             {/* Create User Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-lg p-8 border-white/10 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <GlassCard className="w-full max-w-lg p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30">
@@ -506,8 +615,8 @@ export default function ManageUsersPage() {
 
             {/* Edit User Modal */}
             {showEditModal && editingUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-lg p-8 border-white/10 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <GlassCard className="w-full max-w-lg p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30">

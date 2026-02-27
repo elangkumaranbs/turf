@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getAllTurfsWithOwners, deleteTurf, updateTurf, addTurf, Turf, getAllUsers } from '@/lib/firebase/firestore';
+import { getAllTurfsWithOwners, deleteTurf, updateTurf, addTurf, Turf, getAllUsers, getLocations, Location } from '@/lib/firebase/firestore';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,17 +11,6 @@ import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, Us
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatTime12Hour } from '@/lib/utils';
-
-const CITY_OPTIONS = [
-    { label: 'Gobichettipalayam', value: 'Gobichettipalayam' },
-    { label: 'Erode', value: 'Erode' },
-    { label: 'Coimbatore', value: 'Coimbatore' },
-    { label: 'Chennai', value: 'Chennai' },
-    { label: 'Salem', value: 'Salem' },
-    { label: 'Tiruppur', value: 'Tiruppur' },
-    { label: 'Madurai', value: 'Madurai' },
-    { label: 'Trichy', value: 'Trichy' },
-];
 
 export default function AdminCourtsPage() {
     const { user } = useAuth();
@@ -34,11 +23,12 @@ export default function AdminCourtsPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [turfAdmins, setTurfAdmins] = useState<Array<{ uid: string; name: string; email: string; role: string }>>([]);
+    const [locations, setLocations] = useState<Location[]>([]);
     
     const [createFormData, setCreateFormData] = useState({
         name: '',
         address: '',
-        city: 'Gobichettipalayam',
+        city: '',
         pricePerHour: '',
         description: '',
         wicketType: 'turf' as 'turf' | 'mat' | 'cement',
@@ -71,9 +61,15 @@ export default function AdminCourtsPage() {
         setTurfAdmins(admins);
     };
 
+    const fetchLocations = async () => {
+        const data = await getLocations();
+        setLocations(data);
+    };
+
     useEffect(() => {
         fetchTurfs();
         fetchTurfAdmins();
+        fetchLocations();
     }, []);
 
     const handleDelete = async (turfId: string) => {
@@ -161,7 +157,7 @@ export default function AdminCourtsPage() {
             setCreateFormData({
                 name: '',
                 address: '',
-                city: 'Gobichettipalayam',
+                city: '',
                 pricePerHour: '',
                 description: '',
                 wicketType: 'turf',
@@ -190,6 +186,12 @@ export default function AdminCourtsPage() {
         turf.ownerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // Convert locations to city options format
+    const cityOptions = locations.map(loc => ({
+        label: loc.name,
+        value: loc.name
+    }));
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -214,9 +216,9 @@ export default function AdminCourtsPage() {
                         <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30">
                             <Building2 className="w-6 h-6 text-orange-400" />
                         </div>
-                        <h1 className="text-3xl font-bold text-white">Courts Management</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-white">Courts Management</h1>
                     </div>
-                    <p className="text-gray-400 ml-14">Manage {turfs.length} court{turfs.length !== 1 ? 's' : ''} across all turf admins</p>
+                    <p className="text-gray-400 text-sm sm:text-base sm:ml-14">Manage {turfs.length} court{turfs.length !== 1 ? 's' : ''} across all turf admins</p>
                 </div>
                 <Button onClick={() => setShowCreateModal(true)} className="gap-2 w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20">
                     <Plus size={18} /> Add New Court
@@ -316,7 +318,7 @@ export default function AdminCourtsPage() {
                                             <X size={20} />
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <Input
                                             label="Court Name"
                                             value={editData.name || ''}
@@ -326,9 +328,9 @@ export default function AdminCourtsPage() {
                                             label="City"
                                             value={editData.city || ''}
                                             onChange={(e) => setEditData({ ...editData, city: e.target.value })}
-                                            options={CITY_OPTIONS}
+                                            options={cityOptions}
                                         />
-                                        <div className="md:col-span-2">
+                                        <div className="sm:col-span-2">
                                             <Input
                                                 label="Address"
                                                 value={editData.address || ''}
@@ -388,11 +390,11 @@ export default function AdminCourtsPage() {
                                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                                         />
                                     </div>
-                                    <div className="flex gap-3 pt-2">
-                                        <Button onClick={handleSaveEdit} isLoading={actionLoading === turf.id} className="gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                        <Button onClick={handleSaveEdit} isLoading={actionLoading === turf.id} className="gap-2 w-full sm:w-auto">
                                             <Check size={16} /> Save Changes
                                         </Button>
-                                        <Button variant="secondary" onClick={handleCancelEdit}>Cancel</Button>
+                                        <Button variant="secondary" onClick={handleCancelEdit} className="w-full sm:w-auto">Cancel</Button>
                                     </div>
                                 </div>
                             ) : (
@@ -422,54 +424,54 @@ export default function AdminCourtsPage() {
                                     </div>
 
                                     {/* Details */}
-                                    <div className="flex-1 p-6 flex flex-col justify-between">
-                                        <div className="space-y-4">
+                                    <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
+                                        <div className="space-y-3 sm:space-y-4">
                                             <div>
-                                                <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{turf.name}</h3>
+                                                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">{turf.name}</h3>
                                                 <div className="flex items-start text-gray-400 text-sm">
                                                     <MapPin size={16} className="mr-2 text-orange-400 mt-0.5 flex-shrink-0" />
                                                     <span className="leading-relaxed">{[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}</span>
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex items-center gap-2 text-sm">
+                                            <div className="flex flex-wrap items-center gap-2 text-sm">
                                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                                                     <User size={14} className="text-blue-400" />
-                                                    <span className="text-blue-400 font-medium">{turf.ownerName}</span>
+                                                    <span className="text-blue-400 font-medium truncate">{turf.ownerName}</span>
                                                 </div>
-                                                <span className="text-gray-600">•</span>
-                                                <span className="text-xs text-gray-500">{turf.ownerEmail}</span>
+                                                <span className="hidden sm:inline text-gray-600">•</span>
+                                                <span className="text-xs text-gray-500 truncate">{turf.ownerEmail}</span>
                                             </div>
                                             
-                                            <div className="flex flex-wrap gap-3">
+                                            <div className="flex flex-wrap gap-2 sm:gap-3">
                                                 <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg">
                                                     <IndianRupee size={16} className="text-green-400" />
                                                     <span className="text-white font-bold">₹{turf.pricePerHour}</span>
-                                                    <span className="text-gray-400 text-sm">/hour</span>
+                                                    <span className="text-gray-400 text-xs sm:text-sm">/hour</span>
                                                 </div>
                                                 {turf.operatingHours && (
                                                     <div className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                                                        <Clock size={16} className="text-purple-400" />
-                                                        <span className="text-white text-sm font-medium">{formatTime12Hour(turf.operatingHours.open)} – {formatTime12Hour(turf.operatingHours.close)}</span>
+                                                        <Clock size={16} className="text-purple-400 flex-shrink-0" />
+                                                        <span className="text-white text-xs sm:text-sm font-medium whitespace-nowrap">{formatTime12Hour(turf.operatingHours.open)} – {formatTime12Hour(turf.operatingHours.close)}</span>
                                                     </div>
                                                 )}
                                                 <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg">
-                                                    <span className="text-gray-300 text-sm font-medium capitalize">{turf.wicketType} wicket</span>
+                                                    <span className="text-gray-300 text-xs sm:text-sm font-medium capitalize">{turf.wicketType} wicket</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-wrap gap-3 mt-6 pt-5 border-t border-white/10">
+                                        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-white/10">
                                             <button
                                                 onClick={() => handleEdit(turf)}
-                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 hover:from-orange-500/30 hover:to-orange-600/30 transition-all hover:scale-105 active:scale-95"
+                                                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-orange-500/20 to-orange-600/20 border border-orange-500/30 hover:from-orange-500/30 hover:to-orange-600/30 transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
                                             >
                                                 <Pencil size={16} /> Edit Court
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(turf.id)}
                                                 disabled={actionLoading === turf.id}
-                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                                             >
                                                 {actionLoading === turf.id ? (
                                                     <Loader2 size={16} className="animate-spin" />
@@ -490,13 +492,13 @@ export default function AdminCourtsPage() {
             {/* Create Court Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-3xl p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
+                    <GlassCard className="w-full max-w-3xl p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30">
-                                    <Plus className="w-6 h-6 text-orange-400" />
+                                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-white">Add New Court</h2>
+                                <h2 className="text-xl sm:text-2xl font-bold text-white">Add New Court</h2>
                             </div>
                             <button onClick={() => setShowCreateModal(false)} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                                 <X size={22} />
@@ -516,7 +518,7 @@ export default function AdminCourtsPage() {
                                 ]}
                                 required
                             />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
                                     label="Court Name *"
                                     value={createFormData.name}
@@ -527,7 +529,7 @@ export default function AdminCourtsPage() {
                                     label="City *"
                                     value={createFormData.city}
                                     onChange={(e) => setCreateFormData({ ...createFormData, city: e.target.value })}
-                                    options={CITY_OPTIONS}
+                                    options={cityOptions}
                                     required
                                 />
                             </div>
@@ -579,7 +581,7 @@ export default function AdminCourtsPage() {
                                     required
                                 />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
                                     label="Contact Phone"
                                     value={createFormData.contactPhone}
@@ -607,11 +609,11 @@ export default function AdminCourtsPage() {
                                 value={createFormData.imageUrl}
                                 onChange={(e) => setCreateFormData({ ...createFormData, imageUrl: e.target.value })}
                             />
-                            <div className="flex gap-3 pt-4">
-                                <Button type="submit" isLoading={actionLoading === 'create'} className="flex-1">
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                                <Button type="submit" isLoading={actionLoading === 'create'} className="flex-1 w-full">
                                     Create Court
                                 </Button>
-                                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>
+                                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)} className="w-full sm:w-auto">
                                     Cancel
                                 </Button>
                             </div>

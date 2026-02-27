@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getBookingsByUser, Booking, getTurfById } from '@/lib/firebase/firestore';
-import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, DollarSign, CalendarCheck, Star, User as UserIcon, LogOut, ShieldCheck } from 'lucide-react';
+import { getBookingsByUser, Booking, getTurfById, getSuperAdminStats, AdminStatistics } from '@/lib/firebase/firestore';
+import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, Star, User as UserIcon, LogOut, ShieldCheck, Building2, Users, IndianRupee, ChevronDown, ChevronUp, CalendarCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { SkeletonStats, SkeletonBooking } from '@/components/ui/SkeletonLoader';
 
@@ -15,6 +16,9 @@ export default function DashboardPage() {
     const router = useRouter();
     const [bookings, setBookings] = useState<(Booking & { turfName?: string; location?: string })[]>([]);
     const [loading, setLoading] = useState(true);
+    const [adminStats, setAdminStats] = useState<AdminStatistics[]>([]);
+    const [adminStatsLoading, setAdminStatsLoading] = useState(false);
+    const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -26,6 +30,8 @@ export default function DashboardPage() {
         const fetchDashboardData = async () => {
             if (user) {
                 setLoading(true);
+                
+                // Fetch user bookings
                 const userBookings = await getBookingsByUser(user.uid);
 
                 // Enrich bookings with turf details
@@ -56,6 +62,15 @@ export default function DashboardPage() {
                 );
 
                 setBookings(enrichedBookings);
+
+                // Fetch super admin statistics if user is super admin
+                if (user.role === 'super_admin') {
+                    setAdminStatsLoading(true);
+                    const stats = await getSuperAdminStats();
+                    setAdminStats(stats);
+                    setAdminStatsLoading(false);
+                }
+
                 setLoading(false);
             }
         };
@@ -79,8 +94,8 @@ export default function DashboardPage() {
                     </div>
                     
                     {/* Stats Grid Skeleton */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10 animate-pulse">
-                        {[1, 2, 3, 4].map(i => <SkeletonStats key={i} />)}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10 animate-pulse">
+                        {[1, 2].map(i => <SkeletonStats key={i} />)}
                     </div>
                     
                     {/* Bookings Skeleton */}
@@ -99,14 +114,7 @@ export default function DashboardPage() {
     }
 
     // Calculate statistics
-    const totalSpent = bookings.reduce((sum, booking) => {
-        // Estimate based on 1 hour per time slot at average price
-        return sum + (booking.times?.length || 1) * 1000; // Rough estimate
-    }, 0);
-
     const today = new Date();
-    const upcomingBookings = bookings.filter(b => new Date(b.date) >= today);
-    const pastBookings = bookings.filter(b => new Date(b.date) < today);
     
     const thisMonthBookings = bookings.filter(b => {
         const bookingDate = new Date(b.date);
@@ -123,6 +131,18 @@ export default function DashboardPage() {
     
     const mostVisited = Object.entries(locationCounts).sort((a, b) => b[1] - a[1])[0];
 
+    const toggleAdmin = (adminId: string) => {
+        setExpandedAdmins(prev => {
+            const next = new Set(prev);
+            if (next.has(adminId)) {
+                next.delete(adminId);
+            } else {
+                next.add(adminId);
+            }
+            return next;
+        });
+    };
+
     const statCards = [
         {
             label: 'Total Bookings',
@@ -133,28 +153,12 @@ export default function DashboardPage() {
             border: 'border-[var(--turf-green)]/20',
         },
         {
-            label: 'Upcoming',
-            value: upcomingBookings.length,
-            icon: CalendarCheck,
-            color: 'text-blue-400',
-            bg: 'bg-blue-500/10',
-            border: 'border-blue-500/20',
-        },
-        {
             label: 'This Month',
             value: thisMonthBookings.length,
             icon: TrendingUp,
             color: 'text-purple-400',
             bg: 'bg-purple-500/10',
             border: 'border-purple-500/20',
-        },
-        {
-            label: 'Est. Total Spent',
-            value: `₹${totalSpent.toLocaleString('en-IN')}`,
-            icon: DollarSign,
-            color: 'text-orange-400',
-            bg: 'bg-orange-500/10',
-            border: 'border-orange-500/20',
         },
     ];
 
@@ -176,7 +180,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
                     {statCards.map((card, index) => {
                         const Icon = card.icon;
                         return (
@@ -202,6 +206,24 @@ export default function DashboardPage() {
                             <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
                                 <UserIcon className="w-5 h-5 text-emerald-400" /> Profile
                             </h3>
+                            
+                            {/* Profile Photo */}
+                            <div className="flex justify-center mb-6">
+                                {user?.photoURL ? (
+                                    <Image
+                                        src={user.photoURL}
+                                        alt="Profile"
+                                        width={96}
+                                        height={96}
+                                        className="rounded-full object-cover border-4 border-white/10"
+                                    />
+                                ) : (
+                                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-4 border-white/10 flex items-center justify-center">
+                                        <UserIcon className="w-10 h-10 text-gray-500" />
+                                    </div>
+                                )}
+                            </div>
+                            
                             <div className="space-y-4 text-sm sm:text-base">
                                 <div className="flex flex-col gap-1 pb-3 border-b border-white/5">
                                     <span className="text-gray-500 font-medium">Email</span>
@@ -216,12 +238,20 @@ export default function DashboardPage() {
                                     <span className="text-emerald-400 font-bold capitalize bg-emerald-500/10 px-3 py-1 rounded-full">{user?.role}</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={logout}
-                                className="w-full mt-8 text-sm sm:text-base font-bold text-red-400 hover:text-white border border-red-500/30 hover:bg-red-500 hover:border-red-500 py-3 rounded-xl transition-all flex justify-center items-center gap-2"
-                            >
-                                <LogOut size={16} /> Log Out
-                            </button>
+                            <div className="flex gap-3 mt-8">
+                                <button
+                                    onClick={() => router.push('/dashboard/settings')}
+                                    className="flex-1 text-sm sm:text-base font-bold text-blue-400 hover:text-white border border-blue-500/30 hover:bg-blue-500 hover:border-blue-500 py-3 rounded-xl transition-all flex justify-center items-center gap-2"
+                                >
+                                    <UserIcon size={16} /> Edit Profile
+                                </button>
+                                <button
+                                    onClick={logout}
+                                    className="flex-1 text-sm sm:text-base font-bold text-red-400 hover:text-white border border-red-500/30 hover:bg-red-500 hover:border-red-500 py-3 rounded-xl transition-all flex justify-center items-center gap-2"
+                                >
+                                    <LogOut size={16} /> Log Out
+                                </button>
+                            </div>
                         </GlassCard>
 
                         {/* Most Visited Location */}
@@ -364,6 +394,239 @@ export default function DashboardPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Super Admin Statistics Section */}
+                {user?.role === 'super_admin' && (
+                    <div className="mt-12 space-y-6 animate-fade-up" style={{ animationDelay: '0.8s' }}>
+                        <div className="flex items-center justify-between gap-3 mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30">
+                                    <Users className="w-6 h-6 text-purple-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-white">Turf Admin Statistics</h2>
+                                    <p className="text-gray-400 text-sm mt-1">Overview of all turf admins, their courts, bookings, and earnings</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    console.log('=== DEBUG INFO ===');
+                                    console.log('Admin Stats:', adminStats);
+                                    console.log('Admin Stats Length:', adminStats.length);
+                                    console.log('Total Courts:', adminStats.reduce((sum, admin) => sum + admin.totalTurfs, 0));
+                                    alert(`Debug: ${adminStats.length} admins found with ${adminStats.reduce((sum, admin) => sum + admin.totalTurfs, 0)} total courts. Check console for details.`);
+                                }}
+                                className="text-xs px-3 py-1.5 rounded-lg bg-gray-500/20 text-gray-400 hover:text-white hover:bg-gray-500/30 transition-all"
+                            >
+                                Debug Info
+                            </button>
+                        </div>
+
+                        {adminStatsLoading ? (
+                            <div className="flex items-center justify-center py-20">
+                                <div className="text-center">
+                                    <Loader2 className="animate-spin text-purple-400 w-12 h-12 mx-auto mb-4" />
+                                    <p className="text-white font-medium">Loading admin statistics...</p>
+                                    <p className="text-gray-400 text-sm mt-2">Fetching all turf admins, courts, and bookings</p>
+                                </div>
+                            </div>
+                        ) : adminStats.length === 0 ? (
+                            <GlassCard className="p-12 text-center border-white/10">
+                                <div className="w-20 h-20 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-4">
+                                    <Users className="w-10 h-10 text-purple-400" />
+                                </div>
+                                <h3 className="text-xl text-white font-bold mb-2">No Data Available</h3>
+                                <p className="text-gray-400 mb-4">
+                                    No turf admins with courts found in the system.
+                                </p>
+                                <div className="text-sm text-gray-500 space-y-1 max-w-md mx-auto">
+                                    <p>✅ Make sure you have created turf admin accounts</p>
+                                    <p>✅ Turf admins must have added courts via Owner Panel</p>
+                                    <p>✅ Check browser console for detailed debug logs</p>
+                                </div>
+                            </GlassCard>
+                        ) : (
+                            <>
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                    <GlassCard className="p-5 border-purple-500/20">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="p-2.5 rounded-xl bg-purple-500/10">
+                                        <Users className="w-5 h-5 text-purple-400" />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-400 font-medium mb-1">Total Admins</p>
+                                <p className="text-3xl font-bold text-purple-400">{adminStats.length}</p>
+                            </GlassCard>
+                            <GlassCard className="p-5 border-orange-500/20">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="p-2.5 rounded-xl bg-orange-500/10">
+                                        <Building2 className="w-5 h-5 text-orange-400" />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-400 font-medium mb-1">Total Courts</p>
+                                <p className="text-3xl font-bold text-orange-400">{adminStats.reduce((sum, admin) => sum + admin.totalTurfs, 0)}</p>
+                            </GlassCard>
+                            <GlassCard className="p-5 border-blue-500/20">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="p-2.5 rounded-xl bg-blue-500/10">
+                                        <CalendarCheck className="w-5 h-5 text-blue-400" />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-400 font-medium mb-1">Total Bookings</p>
+                                <p className="text-3xl font-bold text-blue-400">{adminStats.reduce((sum, admin) => sum + admin.totalBookings, 0)}</p>
+                            </GlassCard>
+                            <GlassCard className="p-5 border-green-500/20">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="p-2.5 rounded-xl bg-green-500/10">
+                                        <IndianRupee className="w-5 h-5 text-green-400" />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-gray-400 font-medium mb-1">Total Earnings</p>
+                                <p className="text-3xl font-bold text-green-400">₹{adminStats.reduce((sum, admin) => sum + admin.totalEarnings, 0).toLocaleString('en-IN')}</p>
+                            </GlassCard>
+                        </div>
+
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6">
+                            <p className="text-sm text-blue-400">
+                                <strong>ℹ️ Note:</strong> Bookings count includes all booking statuses. Earnings are calculated only from confirmed bookings.
+                            </p>
+                        </div>
+
+                        {/* Admin Details */}
+                        <div className="space-y-4">
+                            {adminStats.map((admin) => (
+                                <GlassCard key={admin.adminId} className="overflow-hidden border-white/10">
+                                    {/* Admin Header */}
+                                    <button
+                                        onClick={() => toggleAdmin(admin.adminId)}
+                                        className="w-full p-5 flex items-center justify-between hover:bg-white/5 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center font-bold text-white flex-shrink-0">
+                                                {admin.adminName.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="text-left flex-1 min-w-0">
+                                                <h3 className="text-lg font-bold text-white truncate">{admin.adminName}</h3>
+                                                <p className="text-sm text-gray-400 truncate">{admin.adminEmail}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
+                                            <div className="hidden sm:flex items-center gap-6 text-sm">
+                                                <div className="text-center">
+                                                    <p className="text-gray-400">Courts</p>
+                                                    <p className="text-white font-bold">{admin.totalTurfs}</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-gray-400">Bookings</p>
+                                                    <p className="text-blue-400 font-bold">{admin.totalBookings}</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-gray-400">Earnings</p>
+                                                    <p className="text-green-400 font-bold">₹{admin.totalEarnings.toLocaleString('en-IN')}</p>
+                                                </div>
+                                            </div>
+                                            {expandedAdmins.has(admin.adminId) ? (
+                                                <ChevronUp className="w-5 h-5 text-gray-400" />
+                                            ) : (
+                                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                                            )}
+                                        </div>
+                                    </button>
+
+                                    {/* Mobile Stats - Only visible on mobile when collapsed */}
+                                    <div className="sm:hidden px-5 pb-4 flex justify-around text-xs border-t border-white/5">
+                                        <div className="text-center py-3">
+                                            <p className="text-gray-400 mb-1">Courts</p>
+                                            <p className="text-white font-bold">{admin.totalTurfs}</p>
+                                        </div>
+                                        <div className="text-center py-3">
+                                            <p className="text-gray-400 mb-1">Bookings</p>
+                                            <p className="text-blue-400 font-bold">{admin.totalBookings}</p>
+                                        </div>
+                                        <div className="text-center py-3">
+                                            <p className="text-gray-400 mb-1">Earnings</p>
+                                            <p className="text-green-400 font-bold">₹{admin.totalEarnings.toLocaleString('en-IN')}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Court Details */}
+                                    {expandedAdmins.has(admin.adminId) && (
+                                        <div className="border-t border-white/10 bg-white/[0.02]">
+                                            {/* Desktop Table */}
+                                            <div className="hidden md:block overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead className="bg-white/5 text-gray-400 text-xs uppercase">
+                                                        <tr>
+                                                            <th className="px-5 py-3 text-left font-semibold">Court Name</th>
+                                                            <th className="px-5 py-3 text-left font-semibold">City</th>
+                                                            <th className="px-5 py-3 text-left font-semibold">Created By</th>
+                                                            <th className="px-5 py-3 text-center font-semibold">Price/Hour</th>
+                                                            <th className="px-5 py-3 text-center font-semibold">Bookings</th>
+                                                            <th className="px-5 py-3 text-right font-semibold">Earnings</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-white/5">
+                                                        {admin.turfs.map((turf) => (
+                                                            <tr key={turf.turfId} className="hover:bg-white/5 transition-colors">
+                                                                <td className="px-5 py-4 text-white font-medium">{turf.turfName}</td>
+                                                                <td className="px-5 py-4 text-gray-400">{turf.city}</td>
+                                                                <td className="px-5 py-4">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-blue-400 text-xs font-medium">{admin.adminName}</span>
+                                                                        <span className="text-gray-500 text-xs">{admin.adminEmail}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-4 text-center text-orange-400 font-semibold">₹{turf.pricePerHour}</td>
+                                                                <td className="px-5 py-4 text-center">
+                                                                    <span className="text-blue-400 font-semibold">{turf.totalBookings}</span>
+                                                                </td>
+                                                                <td className="px-5 py-4 text-right">
+                                                                    <span className="text-green-400 font-bold">₹{turf.totalEarnings.toLocaleString('en-IN')}</span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Mobile Cards */}
+                                            <div className="md:hidden divide-y divide-white/5">
+                                                {admin.turfs.map((turf) => (
+                                                    <div key={turf.turfId} className="p-4 hover:bg-white/5 transition-colors">
+                                                        <div className="flex items-start justify-between mb-3">
+                                                            <div className="flex-1 min-w-0">
+                                                                <h4 className="text-white font-bold truncate">{turf.turfName}</h4>
+                                                                <p className="text-gray-400 text-xs truncate">{turf.city}</p>
+                                                                <p className="text-blue-400 text-xs mt-1">By: {admin.adminName}</p>
+                                                            </div>
+                                                            <div className="text-right flex-shrink-0 ml-3">
+                                                                <p className="text-green-400 font-bold">₹{turf.totalEarnings.toLocaleString('en-IN')}</p>
+                                                                <p className="text-xs text-gray-400">Earnings</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-around text-xs bg-white/5 rounded-lg py-2">
+                                                            <div className="text-center">
+                                                                <p className="text-gray-400 mb-1">Price/Hour</p>
+                                                                <p className="text-orange-400 font-semibold">₹{turf.pricePerHour}</p>
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <p className="text-gray-400 mb-1">Bookings</p>
+                                                                <p className="text-blue-400 font-semibold">{turf.totalBookings}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </GlassCard>
+                            ))}
+                        </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </main>
     );

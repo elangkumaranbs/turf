@@ -30,9 +30,6 @@ export const Navbar = () => {
         { name: 'Courts', href: '/turfs' },
         ...((user?.role === 'turf_admin' || user?.role === 'super_admin')
             ? [{ name: 'Owner Panel', href: '/owner' }]
-            : []),
-        ...(user?.role === 'super_admin'
-            ? [{ name: 'Locations', href: '/admin/locations' }]
             : [])
     ];
 
@@ -91,7 +88,17 @@ export const Navbar = () => {
                                 <div className="flex items-center gap-2">
                                     <Link href="/dashboard">
                                         <Button variant="ghost" className="flex items-center gap-2 text-sm">
-                                            <UserIcon size={16} />
+                                            {user.photoURL ? (
+                                                <Image
+                                                    src={user.photoURL}
+                                                    alt="Profile"
+                                                    width={24}
+                                                    height={24}
+                                                    className="rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <UserIcon size={16} />
+                                            )}
                                             <span className="hidden lg:inline">{user.displayName?.split(' ')[0] || 'Dashboard'}</span>
                                             <span className="lg:hidden">Account</span>
                                         </Button>

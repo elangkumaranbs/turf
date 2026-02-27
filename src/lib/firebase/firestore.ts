@@ -1,6 +1,6 @@
 import { db, storage } from './config';
 import { collection, getDocs, doc, getDoc, addDoc, setDoc, query, where, updateDoc, deleteDoc, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 // ─── Turf Interface ────────────────────────────────────────────────
 export interface OperatingHours {
@@ -404,6 +404,44 @@ export const updateUserProfile = async (userId: string, data: Record<string, any
     }
 };
 
+// Upload profile photo to Firebase Storage and return download URL
+export const uploadProfilePhoto = async (userId: string, file: File): Promise<string> => {
+    try {
+        // Create a unique filename with timestamp
+        const timestamp = Date.now();
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `profile_photos/${userId}_${timestamp}.${fileExtension}`;
+        const storageRef = ref(storage, fileName);
+        
+        // Upload file
+        await uploadBytes(storageRef, file);
+        
+        // Get download URL
+        const downloadURL = await getDownloadURL(storageRef);
+        
+        // Update user document with photo URL
+        await updateUserProfile(userId, { photoURL: downloadURL });
+        
+        return downloadURL;
+    } catch (error) {
+        console.error("Error uploading profile photo:", error);
+        throw error;
+    }
+};
+
+// Delete old profile photo from storage
+export const deleteProfilePhoto = async (photoURL: string): Promise<void> => {
+    try {
+        if (photoURL && photoURL.includes('firebase')) {
+            const storageRef = ref(storage, photoURL);
+            await deleteObject(storageRef);
+        }
+    } catch (error) {
+        console.error("Error deleting profile photo:", error);
+        // Don't throw error, just log it
+    }
+};
+
 // Create a new user document in Firestore (for manual admin creation)
 export const createUserDocument = async (uid: string, userData: {
     email: string;
@@ -547,5 +585,107 @@ export const deleteOwnerRequest = async (requestId: string): Promise<void> => {
     } catch (error) {
         console.error("Error deleting owner request:", error);
         throw error;
+    }
+};
+// ═══════════════════════════════════════════════════════════════════
+//  SUPER ADMIN STATISTICS
+// ═══════════════════════════════════════════════════════════════════
+
+export interface TurfStatistics {
+    turfId: string;
+    turfName: string;
+    city: string;
+    totalBookings: number;
+    totalEarnings: number;
+    pricePerHour: number;
+}
+
+export interface AdminStatistics {
+    adminId: string;
+    adminName: string;
+    adminEmail: string;
+    turfs: TurfStatistics[];
+    totalTurfs: number;
+    totalBookings: number;
+    totalEarnings: number;
+}
+
+export const getSuperAdminStats = async (): Promise<AdminStatistics[]> => {
+    try {
+        console.log('🔍 Fetching super admin stats...');
+        
+        // Get all users with turf_admin role
+        const allUsers = await getAllUsers();
+        console.log('📊 Total users:', allUsers.length);
+        
+        const turfAdmins = allUsers.filter(u => u.role === 'turf_admin' || u.role === 'super_admin');
+        console.log('👥 Turf admins found:', turfAdmins.length);
+
+        // Get all turfs and bookings at once
+        const allTurfs = await getTurfs();
+        console.log('🏟️ Total turfs:', allTurfs.length);
+        
+        const allBookings = await getAllBookings();
+        console.log('📅 Total bookings:', allBookings.length);
+
+        // Build stats for each admin
+        const adminStats: AdminStatistics[] = [];
+
+        for (const admin of turfAdmins) {
+            const adminTurfs = allTurfs.filter(t => t.adminId === admin.uid);
+            console.log(`🏢 Admin ${admin.name} has ${adminTurfs.length} turfs`);
+            
+            // Skip admins with no turfs
+            if (adminTurfs.length === 0) continue;
+            
+            const turfStats: TurfStatistics[] = [];
+            let totalAdminBookings = 0;
+            let totalAdminEarnings = 0;
+
+            for (const turf of adminTurfs) {
+                // Count all bookings for this turf (not just confirmed)
+                const turfBookings = allBookings.filter(b => b.turfId === turf.id);
+                const turfBookingCount = turfBookings.length;
+
+                // Calculate earnings from confirmed bookings only
+                const confirmedBookings = turfBookings.filter(b => b.status === 'confirmed');
+                const earnings = confirmedBookings.reduce((sum, booking) => {
+                    const slotsCount = booking.times?.length || 1;
+                    return sum + (slotsCount * turf.pricePerHour);
+                }, 0);
+
+                console.log(`  📍 ${turf.name}: ${turfBookingCount} bookings, ₹${earnings} earnings`);
+
+                turfStats.push({
+                    turfId: turf.id,
+                    turfName: turf.name,
+                    city: turf.city || 'N/A',
+                    totalBookings: turfBookingCount,
+                    totalEarnings: earnings,
+                    pricePerHour: turf.pricePerHour
+                });
+
+                totalAdminBookings += turfBookingCount;
+                totalAdminEarnings += earnings;
+            }
+
+            adminStats.push({
+                adminId: admin.uid,
+                adminName: admin.name || 'No Name',
+                adminEmail: admin.email || 'No Email',
+                turfs: turfStats,
+                totalTurfs: adminTurfs.length,
+                totalBookings: totalAdminBookings,
+                totalEarnings: totalAdminEarnings
+            });
+        }
+
+        console.log('✅ Total admin stats generated:', adminStats.length);
+
+        // Sort by total earnings descending
+        return adminStats.sort((a, b) => b.totalEarnings - a.totalEarnings);
+    } catch (error) {
+        console.error("❌ Error fetching super admin stats:", error);
+        return [];
     }
 };

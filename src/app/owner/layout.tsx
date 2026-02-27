@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
-import { LayoutDashboard, MapPin, PlusCircle, CalendarDays, Settings, Loader2, ChevronRight, Menu, X, Users, ShieldCheck, Building2 } from 'lucide-react';
+import { LayoutDashboard, MapPin, PlusCircle, CalendarDays, Settings, Loader2, ChevronRight, Menu, X, Users, ShieldCheck, Building2, MapPinned } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 
@@ -76,11 +76,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         );
     }
 
-    // Build nav links — add "Manage All Courts" and "Manage Users" for super_admin
+    // Build nav links — add "Manage All Courts", "Manage Locations" and "Manage Users" for super_admin
     const allLinks = user.role === 'super_admin'
         ? [
             ...sidebarLinks,
             { name: 'Manage All Courts', href: '/admin/courts', icon: Building2 },
+            { name: 'Manage Locations', href: '/admin/locations', icon: MapPinned },
             { name: 'Manage Users', href: '/admin/users', icon: Users }
         ]
         : sidebarLinks;
@@ -126,7 +127,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                                                     ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
                                                     : link.name === 'Manage All Courts'
                                                         ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
-                                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                        : link.name === 'Manage Locations'
+                                                            ? 'text-teal-400 hover:text-teal-300 hover:bg-teal-500/10'
+                                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
                                             <Icon size={18} />
@@ -167,15 +170,19 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
                                                     : link.name === 'Manage All Courts'
                                                         ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
-                                                        : 'bg-[var(--turf-green)] text-white shadow-lg shadow-[var(--turf-green)]/20'
+                                                        : link.name === 'Manage Locations'
+                                                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
+                                                            : 'bg-[var(--turf-green)] text-white shadow-lg shadow-[var(--turf-green)]/20'
                                                 : link.name === 'Manage Users'
                                                     ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
                                                     : link.name === 'Manage All Courts'
                                                         ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
-                                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                        : link.name === 'Manage Locations'
+                                                            ? 'text-teal-400 hover:text-teal-300 hover:bg-teal-500/10'
+                                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
-                                            <Icon size={18} className={isActive ? 'text-white' : link.name === 'Manage Users' ? 'text-purple-500' : link.name === 'Manage All Courts' ? 'text-orange-500' : 'text-gray-500 group-hover:text-[var(--turf-green)]'} />
+                                            <Icon size={18} className={isActive ? 'text-white' : link.name === 'Manage Users' ? 'text-purple-500' : link.name === 'Manage All Courts' ? 'text-orange-500' : link.name === 'Manage Locations' ? 'text-teal-500' : 'text-gray-500 group-hover:text-[var(--turf-green)]'} />
                                             {link.name}
                                             {isActive && <ChevronRight size={14} className="ml-auto" />}
                                         </Link>
