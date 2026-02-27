@@ -44,7 +44,7 @@ export const Navbar = () => {
             <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="relative w-12 h-12 sm:w-16 sm:h-16">
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16">
                         <Image 
                             src="/location type logo 001.png" 
                             alt="TurfGameDen Logo" 
@@ -54,7 +54,7 @@ export const Navbar = () => {
                             priority
                         />
                     </div>
-                    <span className="text-xl sm:text-2xl font-bold font-sans tracking-tight hidden sm:inline">
+                    <span className="text-base sm:text-xl md:text-2xl font-bold font-sans tracking-tight">
                         Turf<span className="text-[var(--turf-green)]">GameDen</span>
                     </span>
                 </Link>
