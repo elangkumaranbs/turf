@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
-import { LayoutDashboard, MapPin, PlusCircle, CalendarDays, Settings, Loader2, ChevronRight, Menu, X, Users, ShieldCheck, Building2, MapPinned } from 'lucide-react';
+import { LayoutDashboard, MapPin, PlusCircle, CalendarDays, Settings, Loader2, ChevronRight, Menu, X, Users, ShieldCheck, Building2, MapPinned, WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GlassCard } from '@/components/ui/GlassCard';
 
@@ -14,6 +14,7 @@ const sidebarLinks = [
     { name: 'My Courts', href: '/owner/courts', icon: MapPin },
     { name: 'Add Court', href: '/owner/courts/add', icon: PlusCircle },
     { name: 'Bookings', href: '/owner/bookings', icon: CalendarDays },
+    { name: 'Block Offline Slots', href: '/owner/block-slots', icon: WifiOff },
     { name: 'Settings', href: '/owner/settings', icon: Settings },
 ];
 
@@ -129,7 +130,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                                                         ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
                                                         : link.name === 'Manage Locations'
                                                             ? 'text-teal-400 hover:text-teal-300 hover:bg-teal-500/10'
-                                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                            : link.name === 'Block Offline Slots'
+                                                                ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
+                                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
                                             <Icon size={18} />
@@ -168,21 +171,21 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                                             className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group ${isActive
                                                 ? link.name === 'Manage Users'
                                                     ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
-                                                    : link.name === 'Manage All Courts'
+                                                    : link.name === 'Manage All Courts' || link.name === 'Block Offline Slots'
                                                         ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                                                         : link.name === 'Manage Locations'
                                                             ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
                                                             : 'bg-[var(--turf-green)] text-white shadow-lg shadow-[var(--turf-green)]/20'
                                                 : link.name === 'Manage Users'
                                                     ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
-                                                    : link.name === 'Manage All Courts'
+                                                    : link.name === 'Manage All Courts' || link.name === 'Block Offline Slots'
                                                         ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10'
                                                         : link.name === 'Manage Locations'
                                                             ? 'text-teal-400 hover:text-teal-300 hover:bg-teal-500/10'
                                                             : 'text-gray-400 hover:text-white hover:bg-white/5'
                                                 }`}
                                         >
-                                            <Icon size={18} className={isActive ? 'text-white' : link.name === 'Manage Users' ? 'text-purple-500' : link.name === 'Manage All Courts' ? 'text-orange-500' : link.name === 'Manage Locations' ? 'text-teal-500' : 'text-gray-500 group-hover:text-[var(--turf-green)]'} />
+                                            <Icon size={18} className={isActive ? 'text-white' : link.name === 'Manage Users' ? 'text-purple-500' : link.name === 'Manage All Courts' || link.name === 'Block Offline Slots' ? 'text-orange-500' : link.name === 'Manage Locations' ? 'text-teal-500' : 'text-gray-500 group-hover:text-[var(--turf-green)]'} />
                                             {link.name}
                                             {isActive && <ChevronRight size={14} className="ml-auto" />}
                                         </Link>

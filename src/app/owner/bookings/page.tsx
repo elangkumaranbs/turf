@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getBookingsByOwner, getTurfsByAdmin, Booking, Turf } from '@/lib/firebase/firestore';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Loader2, CalendarDays, Clock, MapPin, Search, Filter } from 'lucide-react';
+import { Loader2, CalendarDays, Clock, MapPin, Search, Filter, WifiOff } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function OwnerBookingsPage() {
@@ -123,7 +123,15 @@ export default function OwnerBookingsPage() {
                             <div className="flex flex-col justify-between h-full gap-5 relative z-10">
                                 <div>
                                     <div className="flex flex-wrap items-center justify-between gap-3 mb-3 border-b border-white/5 pb-3">
-                                        <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{booking.turfName}</h4>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{booking.turfName}</h4>
+                                            {booking.bookingType === 'offline' && (
+                                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                                    <WifiOff size={10} />
+                                                    Offline
+                                                </span>
+                                            )}
+                                        </div>
                                         <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider backdrop-blur-md ${booking.status === 'confirmed'
                                             ? 'bg-[var(--turf-green)]/10 text-[var(--turf-green)] border border-[var(--turf-green)]/20'
                                             : booking.status === 'pending'

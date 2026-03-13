@@ -7,11 +7,10 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { addTurf } from '@/lib/firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase/config';
-import { Plus, X, Upload, CheckCircle, Link as LinkIcon, Image as ImageIcon, MapPin } from 'lucide-react';
-import { getLocations, Location } from '@/lib/firebase/firestore';
+import { addTurf, getLocations } from '@/lib/firebase/firestore';
+import { uploadImagesToCloudinary } from '@/lib/cloudinary';
+import { Plus, X, Upload, CheckCircle, Link as LinkIcon, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
+import { geocodeAddress } from '@/lib/geocoding';
 
 
 
@@ -51,6 +50,10 @@ export default function AddCourtPage() {
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [newImageUrl, setNewImageUrl] = useState('');
     const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+    const [manualLat, setManualLat] = useState<number | undefined>(undefined);
+    const [manualLng, setManualLng] = useState<number | undefined>(undefined);
+    const [mapsLink, setMapsLink] = useState('');
+    const [mapsLoading, setMapsLoading] = useState(false);
 
     const handleAddAmenity = () => {
         if (newAmenity.trim()) {
@@ -81,25 +84,55 @@ export default function AddCourtPage() {
         setImageUrls(imageUrls.filter((_, i) => i !== index));
     };
 
+    const [uploadProgress, setUploadProgress] = useState('');
+
+    const fetchCoordsFromMapsLink = async () => {
+        if (!mapsLink.trim()) return;
+        setMapsLoading(true);
+        try {
+            const res = await fetch(`/api/resolve-maps?url=${encodeURIComponent(mapsLink)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to fetch coordinates');
+            setManualLat(data.lat);
+            setManualLng(data.lng);
+            setMapsLink('');
+            alert(`✓ Coordinates fetched: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Could not fetch coordinates from this link.');
+        } finally {
+            setMapsLoading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
 
         setLoading(true);
+        setUploadProgress('');
 
         try {
-            const uploadedUrls: string[] = [];
-
-            // Upload file images to Firebase Storage
-            for (const file of images) {
-                const storageRef = ref(storage, `turfs/${Date.now()}_${file.name}`);
-                await uploadBytes(storageRef, file);
-                const url = await getDownloadURL(storageRef);
-                uploadedUrls.push(url);
+            // Upload files to Cloudinary
+            let uploadedUrls: string[] = [];
+            if (images.length > 0) {
+                uploadedUrls = await uploadImagesToCloudinary(images, ({ index, total, file }) => {
+                    setUploadProgress(`Uploading image ${index}/${total}: ${file}`);
+                });
+                setUploadProgress('All images uploaded!');
             }
 
             // Combine uploaded URLs + pasted URLs
             const allImages = [...uploadedUrls, ...imageUrls];
+
+            // Use manual GPS if set, otherwise geocode the address
+            let coords = null;
+            if (manualLat != null && manualLng != null) {
+                coords = { lat: manualLat, lng: manualLng };
+                setUploadProgress('Using manual GPS coordinates...');
+            } else {
+                setUploadProgress('Geocoding address...');
+                coords = await geocodeAddress(formData.address, formData.city);
+            }
 
             // Create Turf in Firestore
             await addTurf({
@@ -119,15 +152,17 @@ export default function AddCourtPage() {
                     close: formData.closeTime,
                 },
                 status: 'active',
+                ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
             }, user.uid);
 
             setSuccess(true);
             setTimeout(() => router.push('/owner/courts'), 1500);
         } catch (error) {
-            console.error("Error adding court:", error);
-            alert('Failed to add court. Please try again.');
+            console.error('Error adding court:', error);
+            alert('Failed to add court. Please ensure your Cloudinary upload preset is set to "Unsigned".');
         } finally {
             setLoading(false);
+            setUploadProgress('');
         }
     };
 
@@ -274,6 +309,64 @@ export default function AddCourtPage() {
                         </div>
                     </div>
 
+                    {/* GPS Coordinates */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">GPS Coordinates</h3>
+                        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                            <p className="text-xs text-gray-400">Add GPS coordinates for accurate distance calculations. Paste a Google Maps link or enter manually.</p>
+
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="text"
+                                    placeholder="Paste Google Maps link — https://maps.app.goo.gl/..."
+                                    value={mapsLink}
+                                    onChange={(e) => setMapsLink(e.target.value)}
+                                    className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={fetchCoordsFromMapsLink}
+                                    disabled={!mapsLink.trim() || mapsLoading}
+                                    className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                >
+                                    {mapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                                    Fetch
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-sm font-medium text-gray-300 ml-1 block mb-2">Latitude</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        placeholder="e.g. 11.4532"
+                                        value={manualLat != null ? String(manualLat) : ''}
+                                        onChange={(e) => setManualLat(e.target.value ? Number(e.target.value) : undefined)}
+                                        className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-300 ml-1 block mb-2">Longitude</label>
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        placeholder="e.g. 77.7302"
+                                        value={manualLng != null ? String(manualLng) : ''}
+                                        onChange={(e) => setManualLng(e.target.value ? Number(e.target.value) : undefined)}
+                                        className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {manualLat != null && manualLng != null && (
+                                <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                    <MapPin size={11} /> GPS coordinates set
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Amenities */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">Amenities</h3>
@@ -332,22 +425,31 @@ export default function AddCourtPage() {
                         </div>
 
                         {imageMode === 'upload' ? (
-                            /* File Upload */
-                            <div className="border border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--turf-green)] transition-colors relative group">
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                />
-                                <div className="flex flex-col items-center gap-3 text-gray-400 group-hover:text-[var(--turf-green)] transition-colors">
-                                    <Upload className="w-10 h-10" />
-                                    <span className="text-sm">
-                                        {images.length > 0 ? `${images.length} file${images.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}
-                                    </span>
-                                    <span className="text-xs text-gray-600">PNG, JPG up to 5MB each</span>
+                            /* File Upload — Cloudinary */
+                            <div className="space-y-3">
+                                <div className="border border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--turf-green)] transition-colors relative group">
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                    <div className="flex flex-col items-center gap-3 text-gray-400 group-hover:text-[var(--turf-green)] transition-colors">
+                                        <Upload className="w-10 h-10" />
+                                        <span className="text-sm">
+                                            {images.length > 0 ? `${images.length} file${images.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}
+                                        </span>
+                                        <span className="text-xs text-gray-600">PNG, JPG up to 10MB each · Stored on Cloudinary</span>
+                                    </div>
                                 </div>
+                                {/* Upload progress */}
+                                {uploadProgress && (
+                                    <div className="flex items-center gap-2 text-xs text-[var(--turf-green)] bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/20 rounded-lg px-3 py-2">
+                                        <Loader2 size={14} className="animate-spin flex-shrink-0" />
+                                        {uploadProgress}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             /* URL Input */

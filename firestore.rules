@@ -98,9 +98,13 @@ service cloud.firestore {
       // List bookings: users see their own, admins see their turfs', super admin sees all
       allow list: if isAuthenticated();
       
-      // Authenticated users can create bookings
+      // Authenticated users can create bookings (online)
       allow create: if isAuthenticated() && 
                        request.resource.data.userId == request.auth.uid;
+      
+      // Turf admin can create offline blocks for their own turfs
+      allow create: if isAdminOrSuper() &&
+                       get(/databases/$(database)/documents/turfs/$(request.resource.data.turfId)).data.adminId == request.auth.uid;
       
       // User can update their own bookings (e.g., cancel)
       allow update: if isOwner(resource.data.userId) || isSuperAdmin();

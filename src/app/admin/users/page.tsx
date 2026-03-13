@@ -73,7 +73,7 @@ export default function ManageUsersPage() {
                 createFormData.email,
                 createFormData.password
             );
-            
+
             // Create Firestore user document
             await createUserDocument(userCredential.user.uid, {
                 email: createFormData.email,
@@ -85,7 +85,7 @@ export default function ManageUsersPage() {
             // Refresh user list
             const updatedUsers = await getAllUsers();
             setUsers(updatedUsers);
-            
+
             // Reset form and close modal
             setCreateFormData({ name: '', email: '', password: '', role: 'turf_admin', phone: '' });
             setShowCreateModal(false);
@@ -110,12 +110,12 @@ export default function ManageUsersPage() {
             });
 
             // Update local state
-            setUsers(users.map(u => 
-                u.uid === editingUser.uid 
+            setUsers(users.map(u =>
+                u.uid === editingUser.uid
                     ? { ...u, name: editFormData.name, email: editFormData.email, phone: editFormData.phone }
                     : u
             ));
-            
+
             setShowEditModal(false);
             setEditingUser(null);
             alert('User updated successfully!');
@@ -222,8 +222,8 @@ export default function ManageUsersPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <GlassCard 
-                    className={`p-5 text-center border-yellow-500/20 cursor-pointer hover:border-yellow-500/50 transition-all duration-300 group ${filterRole === 'pending_approval' ? 'bg-yellow-500/10 border-yellow-500/40' : ''}`} 
+                <GlassCard
+                    className={`p-5 text-center border-yellow-500/20 cursor-pointer hover:border-yellow-500/50 transition-all duration-300 group ${filterRole === 'pending_approval' ? 'bg-yellow-500/10 border-yellow-500/40' : ''}`}
                     onClick={() => setFilterRole(filterRole === 'pending_approval' ? 'all' : 'pending_approval')}
                 >
                     <div className="p-2.5 rounded-xl bg-yellow-500/10 group-hover:bg-yellow-500/20 w-fit mx-auto mb-3 transition-colors">
@@ -232,8 +232,8 @@ export default function ManageUsersPage() {
                     <p className="text-3xl font-bold text-yellow-400 mb-1">{pendingCount}</p>
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Pending Approval</p>
                 </GlassCard>
-                <GlassCard 
-                    className={`p-5 text-center border-[var(--turf-green)]/20 cursor-pointer hover:border-[var(--turf-green)]/50 transition-all duration-300 group ${filterRole === 'turf_admin' ? 'bg-[var(--turf-green)]/10 border-[var(--turf-green)]/40' : ''}`} 
+                <GlassCard
+                    className={`p-5 text-center border-[var(--turf-green)]/20 cursor-pointer hover:border-[var(--turf-green)]/50 transition-all duration-300 group ${filterRole === 'turf_admin' ? 'bg-[var(--turf-green)]/10 border-[var(--turf-green)]/40' : ''}`}
                     onClick={() => setFilterRole(filterRole === 'turf_admin' ? 'all' : 'turf_admin')}
                 >
                     <div className="p-2.5 rounded-xl bg-[var(--turf-green)]/10 group-hover:bg-[var(--turf-green)]/20 w-fit mx-auto mb-3 transition-colors">
@@ -242,8 +242,8 @@ export default function ManageUsersPage() {
                     <p className="text-3xl font-bold text-[var(--turf-green)] mb-1">{adminCount}</p>
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Turf Admins</p>
                 </GlassCard>
-                <GlassCard 
-                    className={`p-5 text-center border-gray-500/20 cursor-pointer hover:border-gray-500/50 transition-all duration-300 group ${filterRole === 'user' ? 'bg-gray-500/10 border-gray-500/40' : ''}`} 
+                <GlassCard
+                    className={`p-5 text-center border-gray-500/20 cursor-pointer hover:border-gray-500/50 transition-all duration-300 group ${filterRole === 'user' ? 'bg-gray-500/10 border-gray-500/40' : ''}`}
                     onClick={() => setFilterRole(filterRole === 'user' ? 'all' : 'user')}
                 >
                     <div className="p-2.5 rounded-xl bg-gray-500/10 group-hover:bg-gray-500/20 w-fit mx-auto mb-3 transition-colors">
@@ -252,8 +252,8 @@ export default function ManageUsersPage() {
                     <p className="text-3xl font-bold text-gray-300 mb-1">{userCount}</p>
                     <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">Players</p>
                 </GlassCard>
-                <GlassCard 
-                    className={`p-5 text-center border-purple-500/20 cursor-pointer hover:border-purple-500/50 transition-all duration-300 group ${filterRole === 'super_admin' ? 'bg-purple-500/10 border-purple-500/40' : ''}`} 
+                <GlassCard
+                    className={`p-5 text-center border-purple-500/20 cursor-pointer hover:border-purple-500/50 transition-all duration-300 group ${filterRole === 'super_admin' ? 'bg-purple-500/10 border-purple-500/40' : ''}`}
                     onClick={() => setFilterRole(filterRole === 'super_admin' ? 'all' : 'super_admin')}
                 >
                     <div className="p-2.5 rounded-xl bg-purple-500/10 group-hover:bg-purple-500/20 w-fit mx-auto mb-3 transition-colors">
@@ -368,7 +368,7 @@ export default function ManageUsersPage() {
                                                         {actionLoading === u.uid ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                                                         Delete
                                                     </button>
-                                                    
+
                                                     {/* Role management buttons */}
                                                     {u.role === 'pending_approval' && (
                                                         <>
@@ -436,7 +436,7 @@ export default function ManageUsersPage() {
                         const isSelf = u.uid === user?.uid;
                         const isSuperAdmin = u.email === SUPER_ADMIN_EMAIL;
                         return (
-                            <div key={u.uid} className={`p-4 hover:bg-white/5 transition-all duration-200 ${ u.role === 'pending_approval' ? 'bg-yellow-500/5' : ''}`}>
+                            <div key={u.uid} className={`p-4 hover:bg-white/5 transition-all duration-200 ${u.role === 'pending_approval' ? 'bg-yellow-500/5' : ''}`}>
                                 {/* User Info */}
                                 <div className="flex items-start gap-3 mb-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 flex items-center justify-center font-bold text-white flex-shrink-0">
@@ -450,12 +450,12 @@ export default function ManageUsersPage() {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 {/* Role Badge */}
                                 <div className="mb-3">
                                     {getRoleBadge(u.role || 'user')}
                                 </div>
-                                
+
                                 {/* Actions */}
                                 {isSuperAdmin || isSelf ? (
                                     <span className="inline-block px-3 py-1.5 text-xs text-gray-500 bg-white/5 border border-white/5 rounded-lg italic">Protected Account</span>
@@ -478,7 +478,7 @@ export default function ManageUsersPage() {
                                                 Delete
                                             </button>
                                         </div>
-                                        
+
                                         {/* Role management buttons */}
                                         {u.role === 'pending_approval' && (
                                             <div className="flex gap-2">
@@ -550,9 +550,9 @@ export default function ManageUsersPage() {
 
             {/* Create User Modal */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-lg p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200">
+                    <GlassCard className="w-full max-w-lg border-white/10 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] p-0">
+                        <div className="flex items-center justify-between p-6 sm:p-8 border-b border-white/10 flex-shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30">
                                     <UserPlus className="w-6 h-6 text-purple-400" />
@@ -563,61 +563,63 @@ export default function ManageUsersPage() {
                                 <X size={22} />
                             </button>
                         </div>
-                        <form onSubmit={handleCreateUser} className="space-y-4">
-                            <Input
-                                label="Full Name"
-                                value={createFormData.name}
-                                onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Email"
-                                type="email"
-                                value={createFormData.email}
-                                onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Password"
-                                type="password"
-                                value={createFormData.password}
-                                onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Phone (optional)"
-                                value={createFormData.phone}
-                                onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
-                            />
-                            <Select
-                                label="Role"
-                                value={createFormData.role}
-                                onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as any })}
-                                options={[
-                                    { label: 'Player', value: 'user' },
-                                    { label: 'Turf Admin', value: 'turf_admin' },
-                                    { label: 'Pending Approval', value: 'pending_approval' },
-                                    { label: 'Super Admin', value: 'super_admin' }
-                                ]}
-                            />
-                            <div className="flex gap-3 pt-4">
-                                <Button type="submit" isLoading={actionLoading === 'create'} className="flex-1">
-                                    Create User
-                                </Button>
-                                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>
-                                    Cancel
-                                </Button>
-                            </div>
-                        </form>
+                        <div className="overflow-y-auto p-6 sm:p-8 pt-6 custom-scrollbar">
+                            <form onSubmit={handleCreateUser} className="space-y-4">
+                                <Input
+                                    label="Full Name"
+                                    value={createFormData.name}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                                    required
+                                />
+                                <Input
+                                    label="Email"
+                                    type="email"
+                                    value={createFormData.email}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+                                    required
+                                />
+                                <Input
+                                    label="Password"
+                                    type="password"
+                                    value={createFormData.password}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                                    required
+                                />
+                                <Input
+                                    label="Phone (optional)"
+                                    value={createFormData.phone}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, phone: e.target.value })}
+                                />
+                                <Select
+                                    label="Role"
+                                    value={createFormData.role}
+                                    onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as any })}
+                                    options={[
+                                        { label: 'Player', value: 'user' },
+                                        { label: 'Turf Admin', value: 'turf_admin' },
+                                        { label: 'Pending Approval', value: 'pending_approval' },
+                                        { label: 'Super Admin', value: 'super_admin' }
+                                    ]}
+                                />
+                                <div className="flex gap-3 pt-4">
+                                    <Button type="submit" isLoading={actionLoading === 'create'} className="flex-1">
+                                        Create User
+                                    </Button>
+                                    <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
                     </GlassCard>
                 </div>
             )}
 
             {/* Edit User Modal */}
             {showEditModal && editingUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-lg p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200">
+                    <GlassCard className="w-full max-w-lg border-white/10 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] p-0">
+                        <div className="flex items-center justify-between p-6 sm:p-8 border-b border-white/10 flex-shrink-0">
                             <div className="flex items-center gap-3">
                                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30">
                                     <Pencil className="w-6 h-6 text-blue-400" />
@@ -628,34 +630,36 @@ export default function ManageUsersPage() {
                                 <X size={22} />
                             </button>
                         </div>
-                        <form onSubmit={handleEditUser} className="space-y-4">
-                            <Input
-                                label="Full Name"
-                                value={editFormData.name}
-                                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Email"
-                                type="email"
-                                value={editFormData.email}
-                                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                                required
-                            />
-                            <Input
-                                label="Phone"
-                                value={editFormData.phone}
-                                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                            />
-                            <div className="flex gap-3 pt-4">
-                                <Button type="submit" isLoading={actionLoading === 'edit'} className="flex-1">
-                                    Save Changes
-                                </Button>
-                                <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
-                                    Cancel
-                                </Button>
-                            </div>
-                        </form>
+                        <div className="overflow-y-auto p-6 sm:p-8 pt-6 custom-scrollbar">
+                            <form onSubmit={handleEditUser} className="space-y-4">
+                                <Input
+                                    label="Full Name"
+                                    value={editFormData.name}
+                                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                                    required
+                                />
+                                <Input
+                                    label="Email"
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    required
+                                />
+                                <Input
+                                    label="Phone"
+                                    value={editFormData.phone}
+                                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                />
+                                <div className="flex gap-3 pt-4">
+                                    <Button type="submit" isLoading={actionLoading === 'edit'} className="flex-1">
+                                        Save Changes
+                                    </Button>
+                                    <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
                     </GlassCard>
                 </div>
             )}

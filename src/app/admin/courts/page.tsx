@@ -7,10 +7,12 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, User, Building2, Search, ArrowLeft } from 'lucide-react';
+import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, User, Building2, Search, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatTime12Hour } from '@/lib/utils';
+import { uploadImagesToCloudinary } from '@/lib/cloudinary';
+import { geocodeAddress } from '@/lib/geocoding';
 
 export default function AdminCourtsPage() {
     const { user } = useAuth();
@@ -24,7 +26,7 @@ export default function AdminCourtsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [turfAdmins, setTurfAdmins] = useState<Array<{ uid: string; name: string; email: string; role: string }>>([]);
     const [locations, setLocations] = useState<Location[]>([]);
-    
+
     const [createFormData, setCreateFormData] = useState({
         name: '',
         address: '',
@@ -38,9 +40,78 @@ export default function AdminCourtsPage() {
         openTime: '06:00',
         closeTime: '22:00',
         adminId: '',
-        amenities: [] as string[],
-        imageUrl: ''
+        lat: '' as string,
+        lng: '' as string,
     });
+
+    // Create form extra state
+    const [createAmenities, setCreateAmenities] = useState<string[]>([]);
+    const [createNewAmenity, setCreateNewAmenity] = useState('');
+    const [createImages, setCreateImages] = useState<File[]>([]);
+    const [createImageUrls, setCreateImageUrls] = useState<string[]>([]);
+    const [createNewImageUrl, setCreateNewImageUrl] = useState('');
+    const [createImageMode, setCreateImageMode] = useState<'upload' | 'url'>('upload');
+    const [createUploadProgress, setCreateUploadProgress] = useState('');
+    const [geocodingAll, setGeocodingAll] = useState(false);
+    const [geocodeProgress, setGeocodeProgress] = useState('');
+    const [editMapsLink, setEditMapsLink] = useState('');
+    const [editMapsLoading, setEditMapsLoading] = useState(false);
+    const [createMapsLink, setCreateMapsLink] = useState('');
+    const [createMapsLoading, setCreateMapsLoading] = useState(false);
+
+    // Edit form image state
+    const [editImages, setEditImages] = useState<File[]>([]);
+    const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
+    const [editNewImageUrl, setEditNewImageUrl] = useState('');
+    const [editImageMode, setEditImageMode] = useState<'upload' | 'url'>('upload');
+    const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
+
+    const fetchCoordsFromMapsLink = async (
+        url: string,
+        onSuccess: (lat: number, lng: number) => void,
+        setLoading: (v: boolean) => void
+    ) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/resolve-maps?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+            onSuccess(data.lat, data.lng);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Could not fetch coordinates from this link.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGeocodeAll = async () => {
+        const missing = turfs.filter(t => t.lat == null || t.lng == null);
+        if (missing.length === 0) {
+            alert('All courts already have location coordinates.');
+            return;
+        }
+        if (!confirm(`Geocode ${missing.length} court${missing.length !== 1 ? 's' : ''} missing GPS coordinates? This may take a moment.`)) return;
+        setGeocodingAll(true);
+        let updated = 0;
+        let failed = 0;
+        for (let i = 0; i < missing.length; i++) {
+            const turf = missing[i];
+            setGeocodeProgress(`Geocoding ${i + 1}/${missing.length}: ${turf.name}...`);
+            const coords = await geocodeAddress(turf.address || '', turf.city || turf.location || '');
+            if (coords) {
+                await updateTurf(turf.id, { lat: coords.lat, lng: coords.lng });
+                updated++;
+            } else {
+                failed++;
+            }
+            // Rate limit: Nominatim allows 1 req/sec
+            if (i < missing.length - 1) await new Promise(r => setTimeout(r, 1100));
+        }
+        setGeocodingAll(false);
+        setGeocodeProgress('');
+        await fetchTurfs();
+        alert(`Done! ${updated} geocoded, ${failed} failed (address not found).`);
+    };
 
     useEffect(() => {
         if (user && user.role !== 'super_admin') {
@@ -72,6 +143,37 @@ export default function AdminCourtsPage() {
         fetchLocations();
     }, []);
 
+    const resetCreateForm = () => {
+        setCreateFormData({
+            name: '', address: '', city: '', pricePerHour: '', description: '',
+            wicketType: 'turf', courts: '1', contactPhone: '', contactEmail: '',
+            openTime: '06:00', closeTime: '22:00', adminId: '', lat: '', lng: '',
+        });
+        setCreateAmenities([]);
+        setCreateNewAmenity('');
+        setCreateImages([]);
+        setCreateImageUrls([]);
+        setCreateNewImageUrl('');
+        setCreateImageMode('upload');
+        setCreateUploadProgress('');
+        setCreateMapsLink('');
+    };
+
+    const handleAddCreateAmenity = () => {
+        if (createNewAmenity.trim()) {
+            setCreateAmenities([...createAmenities, createNewAmenity.trim()]);
+            setCreateNewAmenity('');
+        }
+    };
+
+    const handleAddCreateImageUrl = () => {
+        const url = createNewImageUrl.trim();
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            setCreateImageUrls([...createImageUrls, url]);
+            setCreateNewImageUrl('');
+        }
+    };
+
     const handleDelete = async (turfId: string) => {
         if (!confirm('⚠️ Are you sure you want to delete this court?\n\nThis will permanently delete:\n• The court/turf\n• All bookings for this court\n\nThis action cannot be undone!')) return;
         setActionLoading(turfId);
@@ -99,17 +201,52 @@ export default function AdminCourtsPage() {
             contactPhone: turf.contactPhone || '',
             contactEmail: turf.contactEmail || '',
             status: turf.status || 'active',
+            lat: turf.lat,
+            lng: turf.lng,
         });
+        setEditExistingImages(turf.images || []);
+        setEditImages([]);
+        setEditImageUrls([]);
+        setEditNewImageUrl('');
+        setEditImageMode('upload');
     };
 
     const handleSaveEdit = async () => {
         if (!editingId) return;
         setActionLoading(editingId);
         try {
-            await updateTurf(editingId, editData);
-            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...editData } : t));
+            // Upload new files to Cloudinary if any
+            let uploadedUrls: string[] = [];
+            if (editImages.length > 0) {
+                uploadedUrls = await uploadImagesToCloudinary(editImages, ({ index, total, file }) => {
+                    // Could add upload progress UI here if needed
+                    console.log(`Uploading image ${index}/${total}: ${file}`);
+                });
+            }
+
+            // Combine all images: existing + newly uploaded files + newly added URLs
+            const allImages = [...editExistingImages, ...uploadedUrls, ...editImageUrls];
+
+            // Strip undefined values — Firestore rejects them
+            const sanitized = Object.fromEntries(
+                Object.entries(editData).filter(([, v]) => v !== undefined)
+            ) as typeof editData;
+
+            // Add images to update data
+            const updateData = {
+                ...sanitized,
+                ...(allImages.length > 0 ? { images: allImages } : {}),
+            };
+
+            await updateTurf(editingId, updateData);
+            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...updateData } : t));
             setEditingId(null);
             setEditData({});
+            setEditMapsLink('');
+            setEditExistingImages([]);
+            setEditImages([]);
+            setEditImageUrls([]);
+            setEditNewImageUrl('');
             alert('Court updated successfully!');
         } catch (error) {
             alert(`Failed to update court: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -121,6 +258,19 @@ export default function AdminCourtsPage() {
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditData({});
+        setEditMapsLink('');
+        setEditExistingImages([]);
+        setEditImages([]);
+        setEditImageUrls([]);
+        setEditNewImageUrl('');
+    };
+
+    const handleAddEditImageUrl = () => {
+        const url = editNewImageUrl.trim();
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            setEditImageUrls([...editImageUrls, url]);
+            setEditNewImageUrl('');
+        }
     };
 
     const handleCreateCourt = async (e: React.FormEvent) => {
@@ -130,7 +280,29 @@ export default function AdminCourtsPage() {
             return;
         }
         setActionLoading('create');
+        setCreateUploadProgress('');
         try {
+            // Upload files to Cloudinary
+            let uploadedUrls: string[] = [];
+            if (createImages.length > 0) {
+                uploadedUrls = await uploadImagesToCloudinary(createImages, ({ index, total, file }) => {
+                    setCreateUploadProgress(`Uploading image ${index}/${total}: ${file}`);
+                });
+                setCreateUploadProgress('All images uploaded!');
+            }
+
+            const allImages = [...uploadedUrls, ...createImageUrls];
+
+            // Use manual coordinates if provided, otherwise geocode
+            let coords = null;
+            if (createFormData.lat && createFormData.lng) {
+                coords = { lat: Number(createFormData.lat), lng: Number(createFormData.lng) };
+            } else {
+                setCreateUploadProgress('Geocoding address...');
+                coords = await geocodeAddress(createFormData.address, createFormData.city);
+                setCreateUploadProgress('');
+            }
+
             await addTurf({
                 name: createFormData.name,
                 address: createFormData.address,
@@ -138,8 +310,8 @@ export default function AdminCourtsPage() {
                 pricePerHour: Number(createFormData.pricePerHour),
                 description: createFormData.description,
                 wicketType: createFormData.wicketType,
-                images: createFormData.imageUrl ? [createFormData.imageUrl] : ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'],
-                amenities: createFormData.amenities,
+                images: allImages.length > 0 ? allImages : ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'],
+                amenities: createAmenities,
                 courts: Number(createFormData.courts),
                 contactPhone: createFormData.contactPhone,
                 contactEmail: createFormData.contactEmail,
@@ -148,28 +320,11 @@ export default function AdminCourtsPage() {
                     close: createFormData.closeTime,
                 },
                 status: 'active',
+                ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
             }, createFormData.adminId);
 
-            // Refresh turfs list
             await fetchTurfs();
-            
-            // Reset form and close modal
-            setCreateFormData({
-                name: '',
-                address: '',
-                city: '',
-                pricePerHour: '',
-                description: '',
-                wicketType: 'turf',
-                courts: '1',
-                contactPhone: '',
-                contactEmail: '',
-                openTime: '06:00',
-                closeTime: '22:00',
-                adminId: '',
-                amenities: [],
-                imageUrl: ''
-            });
+            resetCreateForm();
             setShowCreateModal(false);
             alert('Court created successfully!');
         } catch (error) {
@@ -177,6 +332,7 @@ export default function AdminCourtsPage() {
             alert(`Failed to create court: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setActionLoading(null);
+            setCreateUploadProgress('');
         }
     };
 
@@ -186,11 +342,7 @@ export default function AdminCourtsPage() {
         turf.ownerName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Convert locations to city options format
-    const cityOptions = locations.map(loc => ({
-        label: loc.name,
-        value: loc.name
-    }));
+    const cityOptions = locations.map(loc => ({ label: loc.name, value: loc.name }));
 
     if (loading) {
         return (
@@ -220,9 +372,11 @@ export default function AdminCourtsPage() {
                     </div>
                     <p className="text-gray-400 text-sm sm:text-base sm:ml-14">Manage {turfs.length} court{turfs.length !== 1 ? 's' : ''} across all turf admins</p>
                 </div>
-                <Button onClick={() => setShowCreateModal(true)} className="gap-2 w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20">
-                    <Plus size={18} /> Add New Court
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                    <Button onClick={() => setShowCreateModal(true)} className="gap-2 w-full sm:w-auto bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20">
+                        <Plus size={18} /> Add New Court
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Overview */}
@@ -337,6 +491,52 @@ export default function AdminCourtsPage() {
                                                 onChange={(e) => setEditData({ ...editData, address: e.target.value })}
                                             />
                                         </div>
+                                        <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                                            <label className="text-sm font-medium text-gray-300 block">GPS Coordinates <span className="text-gray-500 font-normal text-xs">(optional)</span></label>
+                                            <div className="flex gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Paste Google Maps link — https://maps.app.goo.gl/..."
+                                                    value={editMapsLink}
+                                                    onChange={(e) => setEditMapsLink(e.target.value)}
+                                                    className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fetchCoordsFromMapsLink(
+                                                        editMapsLink,
+                                                        (lat, lng) => { setEditData(d => ({ ...d, lat, lng })); setEditMapsLink(''); },
+                                                        setEditMapsLoading
+                                                    )}
+                                                    disabled={!editMapsLink.trim() || editMapsLoading}
+                                                    className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                                >
+                                                    {editMapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                                                    Fetch
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Input
+                                                    label="Latitude"
+                                                    type="number"
+                                                    placeholder="e.g. 11.4532"
+                                                    value={editData.lat != null ? String(editData.lat) : ''}
+                                                    onChange={(e) => setEditData({ ...editData, lat: e.target.value ? Number(e.target.value) : undefined })}
+                                                />
+                                                <Input
+                                                    label="Longitude"
+                                                    type="number"
+                                                    placeholder="e.g. 77.7302"
+                                                    value={editData.lng != null ? String(editData.lng) : ''}
+                                                    onChange={(e) => setEditData({ ...editData, lng: e.target.value ? Number(e.target.value) : undefined })}
+                                                />
+                                            </div>
+                                            {editData.lat != null && editData.lng != null && (
+                                                <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                                    <MapPin size={11} /> Coordinates set
+                                                </p>
+                                            )}
+                                        </div>
                                         <Input
                                             label="Price per Hour (₹)"
                                             type="number"
@@ -390,6 +590,123 @@ export default function AdminCourtsPage() {
                                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                                         />
                                     </div>
+
+                                    {/* ── Images ── */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                            <Upload size={14} /> Update Images
+                                        </h3>
+
+                                        {/* Existing Images */}
+                                        {editExistingImages.length > 0 && (
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-400 block mb-2">Current Images</label>
+                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                                    {editExistingImages.map((url, idx) => (
+                                                        <div key={`existing-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                            <img src={url} alt={`Existing ${idx + 1}`} className="w-full h-full object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditExistingImages(editExistingImages.filter((_, i) => i !== idx))}
+                                                                className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                            <span className="absolute bottom-1 left-1 text-[9px] bg-black/70 text-gray-300 px-1 py-0.5 rounded">Current</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Add New Images */}
+                                        <div>
+                                            <label className="text-xs font-medium text-gray-400 block mb-2">Add New Images</label>
+
+                                            {/* Toggle */}
+                                            <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 max-w-xs mb-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditImageMode('upload')}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${editImageMode === 'upload' ? 'bg-orange-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                                >
+                                                    <Upload size={13} /> Upload Files
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditImageMode('url')}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${editImageMode === 'url' ? 'bg-orange-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                                >
+                                                    <LinkIcon size={13} /> Paste URL
+                                                </button>
+                                            </div>
+
+                                            {editImageMode === 'upload' ? (
+                                                <div className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-orange-500/50 transition-colors relative group">
+                                                    <input
+                                                        type="file"
+                                                        multiple
+                                                        accept="image/*"
+                                                        onChange={(e) => { if (e.target.files) setEditImages(Array.from(e.target.files)); }}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    />
+                                                    <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-orange-400 transition-colors">
+                                                        <Upload className="w-8 h-8" />
+                                                        <span className="text-sm">
+                                                            {editImages.length > 0 ? `${editImages.length} file${editImages.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}
+                                                        </span>
+                                                        <span className="text-xs text-gray-600">PNG, JPG up to 10MB each</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        value={editNewImageUrl}
+                                                        onChange={(e) => setEditNewImageUrl(e.target.value)}
+                                                        placeholder="https://example.com/photo.jpg"
+                                                        className="flex-1"
+                                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEditImageUrl(); } }}
+                                                    />
+                                                    <Button type="button" onClick={handleAddEditImageUrl} variant="secondary" className="flex-shrink-0 gap-1">
+                                                        <Plus size={16} /> Add
+                                                    </Button>
+                                                </div>
+                                            )}
+
+                                            {/* New Images Preview */}
+                                            {(editImages.length > 0 || editImageUrls.length > 0) && (
+                                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
+                                                    {editImages.map((file, idx) => (
+                                                        <div key={`file-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                            <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditImages(editImages.filter((_, i) => i !== idx))}
+                                                                className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                            <span className="absolute bottom-1 left-1 text-[9px] bg-black/70 text-gray-300 px-1 py-0.5 rounded">New</span>
+                                                        </div>
+                                                    ))}
+                                                    {editImageUrls.map((url, idx) => (
+                                                        <div key={`url-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                            <img src={url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditImageUrls(editImageUrls.filter((_, i) => i !== idx))}
+                                                                className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                                            >
+                                                                <X size={10} />
+                                                            </button>
+                                                            <span className="absolute bottom-1 left-1 text-[9px] bg-black/70 text-gray-300 px-1 py-0.5 rounded">New URL</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
                                         <Button onClick={handleSaveEdit} isLoading={actionLoading === turf.id} className="gap-2 w-full sm:w-auto">
                                             <Check size={16} /> Save Changes
@@ -400,7 +717,6 @@ export default function AdminCourtsPage() {
                             ) : (
                                 /* ──── View Mode ──── */
                                 <div className="flex flex-col md:flex-row">
-                                    {/* Image */}
                                     <div className="relative w-full md:w-64 lg:w-72 h-56 md:h-auto flex-shrink-0 overflow-hidden">
                                         <Image
                                             src={turf.images?.[0] || 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'}
@@ -423,7 +739,6 @@ export default function AdminCourtsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Details */}
                                     <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
                                         <div className="space-y-3 sm:space-y-4">
                                             <div>
@@ -433,7 +748,7 @@ export default function AdminCourtsPage() {
                                                     <span className="leading-relaxed">{[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}</span>
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="flex flex-wrap items-center gap-2 text-sm">
                                                 <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                                                     <User size={14} className="text-blue-400" />
@@ -442,7 +757,7 @@ export default function AdminCourtsPage() {
                                                 <span className="hidden sm:inline text-gray-600">•</span>
                                                 <span className="text-xs text-gray-500 truncate">{turf.ownerEmail}</span>
                                             </div>
-                                            
+
                                             <div className="flex flex-wrap gap-2 sm:gap-3">
                                                 <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg">
                                                     <IndianRupee size={16} className="text-green-400" />
@@ -457,6 +772,9 @@ export default function AdminCourtsPage() {
                                                 )}
                                                 <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg">
                                                     <span className="text-gray-300 text-xs sm:text-sm font-medium capitalize">{turf.wicketType} wicket</span>
+                                                </div>
+                                                <div className={`px-3 py-2 rounded-lg border text-xs font-medium ${turf.lat != null && turf.lng != null ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                                                    <MapPin size={12} className="inline mr-1" />{turf.lat != null && turf.lng != null ? 'GPS ✓' : 'No GPS'}
                                                 </div>
                                             </div>
                                         </div>
@@ -473,11 +791,7 @@ export default function AdminCourtsPage() {
                                                 disabled={actionLoading === turf.id}
                                                 className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                                             >
-                                                {actionLoading === turf.id ? (
-                                                    <Loader2 size={16} className="animate-spin" />
-                                                ) : (
-                                                    <Trash2 size={16} />
-                                                )}
+                                                {actionLoading === turf.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                                                 Delete Court
                                             </button>
                                         </div>
@@ -489,136 +803,384 @@ export default function AdminCourtsPage() {
                 </div>
             )}
 
-            {/* Create Court Modal */}
+            {/* ──── Add New Court Modal ──── */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 overflow-y-auto animate-in fade-in duration-200">
-                    <GlassCard className="w-full max-w-3xl p-6 sm:p-8 border-white/10 shadow-2xl shadow-black/50 my-8 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-6">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30">
-                                    <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" />
+                <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
+                    className="bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 pt-70"
+                    onClick={(e) => { if (e.target === e.currentTarget) { resetCreateForm(); setShowCreateModal(false); } }}
+                >
+                    <div
+                        className="w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl shadow-black/50 flex flex-col max-h-[92vh]"
+                        style={{ background: 'rgba(10,10,10,0.95)', backdropFilter: 'blur(24px)' }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30">
+                                    <Plus className="w-5 h-5 text-orange-400" />
                                 </div>
-                                <h2 className="text-xl sm:text-2xl font-bold text-white">Add New Court</h2>
+                                <div>
+                                    <h2 className="text-lg font-bold text-white">Add New Court</h2>
+                                    <p className="text-xs text-gray-500">Fill in the details to create a new court</p>
+                                </div>
                             </div>
-                            <button onClick={() => setShowCreateModal(false)} className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                                <X size={22} />
+                            <button
+                                onClick={() => { resetCreateForm(); setShowCreateModal(false); }}
+                                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                <X size={20} />
                             </button>
                         </div>
-                        <form onSubmit={handleCreateCourt} className="space-y-5">
-                            <Select
-                                label="Turf Admin *"
-                                value={createFormData.adminId}
-                                onChange={(e) => setCreateFormData({ ...createFormData, adminId: e.target.value })}
-                                options={[
-                                    { label: 'Select owner...', value: '' },
-                                    ...turfAdmins.map(admin => ({
-                                        label: `${admin.name} (${admin.email})`,
-                                        value: admin.uid
-                                    }))
-                                ]}
-                                required
-                            />
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    label="Court Name *"
-                                    value={createFormData.name}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
-                                    required
-                                />
-                                <Select
-                                    label="City *"
-                                    value={createFormData.city}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, city: e.target.value })}
-                                    options={cityOptions}
-                                    required
-                                />
-                            </div>
-                            <Input
-                                label="Address *"
-                                value={createFormData.address}
-                                onChange={(e) => setCreateFormData({ ...createFormData, address: e.target.value })}
-                                required
-                            />
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <Input
-                                    label="Price per Hour (₹) *"
-                                    type="number"
-                                    value={createFormData.pricePerHour}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, pricePerHour: e.target.value })}
-                                    required
-                                />
-                                <Select
-                                    label="Wicket Type *"
-                                    value={createFormData.wicketType}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, wicketType: e.target.value as 'turf' | 'mat' | 'cement' })}
-                                    options={[
-                                        { label: 'Turf Wicket', value: 'turf' },
-                                        { label: 'Mat Wicket', value: 'mat' },
-                                        { label: 'Cement Wicket', value: 'cement' }
-                                    ]}
-                                />
-                                <Input
-                                    label="Number of Courts *"
-                                    type="number"
-                                    value={createFormData.courts}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, courts: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Opening Time *"
-                                    type="time"
-                                    value={createFormData.openTime}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, openTime: e.target.value })}
-                                    required
-                                />
-                                <Input
-                                    label="Closing Time *"
-                                    type="time"
-                                    value={createFormData.closeTime}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, closeTime: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <Input
-                                    label="Contact Phone"
-                                    value={createFormData.contactPhone}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, contactPhone: e.target.value })}
-                                />
-                                <Input
-                                    label="Contact Email"
-                                    type="email"
-                                    value={createFormData.contactEmail}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, contactEmail: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300 ml-1">Description *</label>
-                                <textarea
-                                    className="flex w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-gray-500 focus:border-[var(--turf-green)] focus:ring-1 focus:ring-[var(--turf-green)] focus:outline-none transition-all h-24 resize-none"
-                                    value={createFormData.description}
-                                    onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
-                                    required
-                                />
-                            </div>
-                            <Input
-                                label="Image URL (optional)"
-                                placeholder="https://example.com/image.jpg"
-                                value={createFormData.imageUrl}
-                                onChange={(e) => setCreateFormData({ ...createFormData, imageUrl: e.target.value })}
-                            />
-                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <Button type="submit" isLoading={actionLoading === 'create'} className="flex-1 w-full">
-                                    Create Court
-                                </Button>
-                                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)} className="w-full sm:w-auto">
-                                    Cancel
-                                </Button>
-                            </div>
-                        </form>
-                    </GlassCard>
+
+                        {/* Scrollable Form Body */}
+                        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                            <form onSubmit={handleCreateCourt} className="p-6 space-y-6">
+
+                                {/* ── Owner Assignment ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <User size={14} /> Owner Assignment
+                                    </h3>
+                                    <Select
+                                        label="Turf Admin *"
+                                        value={createFormData.adminId}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, adminId: e.target.value })}
+                                        options={[
+                                            { label: 'Select an owner...', value: '' },
+                                            ...turfAdmins.map(admin => ({
+                                                label: `${admin.name} (${admin.email})`,
+                                                value: admin.uid,
+                                            }))
+                                        ]}
+                                        required
+                                    />
+                                </div>
+
+                                {/* ── Basic Information ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <MapPin size={14} /> Basic Information
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <Input
+                                            label="Court Name *"
+                                            placeholder="e.g. Green Field Turf"
+                                            value={createFormData.name}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                                            required
+                                        />
+                                        <Select
+                                            label="City *"
+                                            value={createFormData.city}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, city: e.target.value })}
+                                            options={[
+                                                { label: 'Select a city...', value: '' },
+                                                ...cityOptions,
+                                            ]}
+                                            required
+                                        />
+                                    </div>
+                                    <Input
+                                        label="Address *"
+                                        placeholder="e.g. 12, Main Road, Near Bus Stand"
+                                        value={createFormData.address}
+                                        onChange={(e) => setCreateFormData({ ...createFormData, address: e.target.value })}
+                                        required
+                                    />
+                                    {/* GPS Coordinates */}
+                                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                                        <label className="text-sm font-medium text-gray-300 block">GPS Coordinates <span className="text-gray-500 font-normal text-xs">(optional — will auto-geocode from address if blank)</span></label>
+                                        <div className="flex gap-2 items-center">
+                                            <input
+                                                type="text"
+                                                placeholder="Paste Google Maps link — https://maps.app.goo.gl/..."
+                                                value={createMapsLink}
+                                                onChange={(e) => setCreateMapsLink(e.target.value)}
+                                                className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => fetchCoordsFromMapsLink(
+                                                    createMapsLink,
+                                                    (lat, lng) => { setCreateFormData(d => ({ ...d, lat: String(lat), lng: String(lng) })); setCreateMapsLink(''); },
+                                                    setCreateMapsLoading
+                                                )}
+                                                disabled={!createMapsLink.trim() || createMapsLoading}
+                                                className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                            >
+                                                {createMapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                                                Fetch
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Input
+                                                label="Latitude"
+                                                type="number"
+                                                placeholder="e.g. 11.4532"
+                                                value={createFormData.lat}
+                                                onChange={(e) => setCreateFormData({ ...createFormData, lat: e.target.value })}
+                                            />
+                                            <Input
+                                                label="Longitude"
+                                                type="number"
+                                                placeholder="e.g. 77.7302"
+                                                value={createFormData.lng}
+                                                onChange={(e) => setCreateFormData({ ...createFormData, lng: e.target.value })}
+                                            />
+                                        </div>
+                                        {createFormData.lat && createFormData.lng && (
+                                            <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                                <MapPin size={11} /> Coordinates set — geocoding will be skipped
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-medium text-gray-300 ml-1 block">Description *</label>
+                                        <textarea
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/20 outline-none transition-all resize-none h-20"
+                                            placeholder="Describe your court, facilities, and what makes it special..."
+                                            value={createFormData.description}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* ── Pricing & Specs ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <IndianRupee size={14} /> Pricing & Specifications
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <Input
+                                            label="Price per Hour (₹) *"
+                                            type="number"
+                                            placeholder="1000"
+                                            value={createFormData.pricePerHour}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, pricePerHour: e.target.value })}
+                                            required
+                                        />
+                                        <Select
+                                            label="Wicket Type *"
+                                            value={createFormData.wicketType}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, wicketType: e.target.value as 'turf' | 'mat' | 'cement' })}
+                                            options={[
+                                                { label: 'Turf Wicket', value: 'turf' },
+                                                { label: 'Mat Wicket', value: 'mat' },
+                                                { label: 'Cement Wicket', value: 'cement' },
+                                            ]}
+                                        />
+                                        <Input
+                                            label="Number of Courts *"
+                                            type="number"
+                                            placeholder="1"
+                                            value={createFormData.courts}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, courts: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* ── Operating Hours ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Clock size={14} /> Operating Hours
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input
+                                            label="Opening Time *"
+                                            type="time"
+                                            value={createFormData.openTime}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, openTime: e.target.value })}
+                                            required
+                                        />
+                                        <Input
+                                            label="Closing Time *"
+                                            type="time"
+                                            value={createFormData.closeTime}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, closeTime: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+                                        ⏰ Booking slots will be auto-generated in 1-hour intervals between opening and closing time.
+                                    </p>
+                                </div>
+
+                                {/* ── Contact Information ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <User size={14} /> Contact Information
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <Input
+                                            label="Phone Number"
+                                            type="tel"
+                                            placeholder="+91 98765 43210"
+                                            value={createFormData.contactPhone}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, contactPhone: e.target.value })}
+                                        />
+                                        <Input
+                                            label="Email"
+                                            type="email"
+                                            placeholder="owner@example.com"
+                                            value={createFormData.contactEmail}
+                                            onChange={(e) => setCreateFormData({ ...createFormData, contactEmail: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* ── Amenities ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Check size={14} /> Amenities
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={createNewAmenity}
+                                            onChange={(e) => setCreateNewAmenity(e.target.value)}
+                                            placeholder="e.g. Parking, Floodlights, Changing Room"
+                                            className="flex-1"
+                                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCreateAmenity(); } }}
+                                        />
+                                        <Button type="button" onClick={handleAddCreateAmenity} variant="secondary" className="flex-shrink-0">
+                                            <Plus size={16} />
+                                        </Button>
+                                    </div>
+                                    {createAmenities.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {createAmenities.map((item, idx) => (
+                                                <span key={idx} className="bg-orange-500/10 text-orange-300 text-xs px-3 py-1.5 rounded-full flex items-center gap-2 border border-orange-500/20">
+                                                    {item}
+                                                    <button type="button" onClick={() => setCreateAmenities(createAmenities.filter((_, i) => i !== idx))} className="hover:text-white transition-colors">
+                                                        <X size={12} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* ── Images ── */}
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-orange-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Upload size={14} /> Images
+                                    </h3>
+
+                                    {/* Toggle */}
+                                    <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 max-w-xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreateImageMode('upload')}
+                                            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${createImageMode === 'upload' ? 'bg-orange-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            <Upload size={13} /> Upload Files
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreateImageMode('url')}
+                                            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${createImageMode === 'url' ? 'bg-orange-500 text-white shadow' : 'text-gray-400 hover:text-white'}`}
+                                        >
+                                            <LinkIcon size={13} /> Paste URL
+                                        </button>
+                                    </div>
+
+                                    {createImageMode === 'upload' ? (
+                                        <div className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-orange-500/50 transition-colors relative group">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={(e) => { if (e.target.files) setCreateImages(Array.from(e.target.files)); }}
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                            />
+                                            <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-orange-400 transition-colors">
+                                                <Upload className="w-8 h-8" />
+                                                <span className="text-sm">
+                                                    {createImages.length > 0 ? `${createImages.length} file${createImages.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}
+                                                </span>
+                                                <span className="text-xs text-gray-600">PNG, JPG up to 10MB each · Stored on Cloudinary</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <Input
+                                                value={createNewImageUrl}
+                                                onChange={(e) => setCreateNewImageUrl(e.target.value)}
+                                                placeholder="https://example.com/photo.jpg"
+                                                className="flex-1"
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCreateImageUrl(); } }}
+                                            />
+                                            <Button type="button" onClick={handleAddCreateImageUrl} variant="secondary" className="flex-shrink-0 gap-1">
+                                                <Plus size={16} /> Add
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {/* Upload progress */}
+                                    {createUploadProgress && (
+                                        <div className="flex items-center gap-2 text-xs text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2">
+                                            <Loader2 size={14} className="animate-spin flex-shrink-0" />
+                                            {createUploadProgress}
+                                        </div>
+                                    )}
+
+                                    {/* Image previews */}
+                                    {(createImages.length > 0 || createImageUrls.length > 0) && (
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                            {createImages.map((file, idx) => (
+                                                <div key={`file-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                    <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCreateImages(createImages.filter((_, i) => i !== idx))}
+                                                        className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                    <span className="absolute bottom-1 left-1 text-[9px] bg-black/70 text-gray-300 px-1 py-0.5 rounded">File</span>
+                                                </div>
+                                            ))}
+                                            {createImageUrls.map((url, idx) => (
+                                                <div key={`url-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                    <img src={url} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setCreateImageUrls(createImageUrls.filter((_, i) => i !== idx))}
+                                                        className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                    <span className="absolute bottom-1 left-1 text-[9px] bg-black/70 text-gray-300 px-1 py-0.5 rounded">URL</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* ── Submit ── */}
+                                <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-white/10">
+                                    <Button
+                                        type="submit"
+                                        isLoading={actionLoading === 'create'}
+                                        className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-lg shadow-orange-500/20"
+                                    >
+                                        Create Court
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() => { resetCreateForm(); setShowCreateModal(false); }}
+                                        className="sm:w-auto"
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getOwnerStats, OwnerStats, getBookingsByOwner, Booking, getTurfsByAdmin, Turf, getSuperAdminStats, AdminStatistics } from '@/lib/firebase/firestore';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { MapPin, CalendarDays, TrendingUp, PlusCircle, ArrowRight, DollarSign, Calendar, Activity, Users, Building2, CalendarCheck, IndianRupee, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { MapPin, CalendarDays, TrendingUp, PlusCircle, ArrowRight, DollarSign, Calendar, Activity, Users, Building2, CalendarCheck, IndianRupee, ChevronDown, ChevronUp, Loader2, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { SkeletonStats } from '@/components/ui/SkeletonLoader';
 
@@ -211,7 +211,7 @@ export default function OwnerDashboardPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 pt-4 animate-fade-up" style={{ animationDelay: '0.6s' }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 pt-4 animate-fade-up" style={{ animationDelay: '0.6s' }}>
                 <Link href="/owner/courts/add">
                     <GlassCard className="h-full p-6 sm:p-8 border-[var(--turf-green)]/30 bg-gradient-to-br from-[var(--turf-green)]/5 to-transparent hover:border-[var(--turf-green)]/60 transition-all cursor-pointer group relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--turf-green)]/10 blur-3xl rounded-full" />
@@ -243,7 +243,24 @@ export default function OwnerDashboardPage() {
                         </div>
                     </GlassCard>
                 </Link>
+
+                <Link href="/owner/block-slots">
+                    <GlassCard className="h-full p-6 sm:p-8 border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent hover:border-orange-500/60 transition-all cursor-pointer group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full" />
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="p-4 sm:p-5 rounded-2xl bg-orange-500/10 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.2)] group-hover:scale-110 transition-transform">
+                                <WifiOff size={32} className="text-orange-400" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-white group-hover:text-orange-400 transition-colors mb-1">Block Offline Slots</h3>
+                                <p className="text-sm text-gray-400 font-medium leading-relaxed">Mark walk-in or phone bookings to prevent online double-booking.</p>
+                            </div>
+                            <ArrowRight size={24} className="text-gray-600 group-hover:text-orange-400 group-hover:translate-x-1 transition-all" />
+                        </div>
+                    </GlassCard>
+                </Link>
             </div>
+
 
             {/* Super Admin Statistics */}
             {user?.role === 'super_admin' && (

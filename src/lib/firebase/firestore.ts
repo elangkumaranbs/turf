@@ -27,6 +27,8 @@ export interface Turf {
     courts?: number;           // Number of courts/pitches at this venue
     status?: 'active' | 'inactive';
     createdAt?: string;
+    lat?: number;              // Latitude (auto-geocoded from address)
+    lng?: number;              // Longitude (auto-geocoded from address)
 }
 
 // ─── Booking Interface ─────────────────────────────────────────────
@@ -40,6 +42,8 @@ export interface Booking {
     duration: number; // in minutes
     createdAt: string;
     status: 'confirmed' | 'cancelled' | 'pending';
+    bookingType?: 'online' | 'offline'; // 'offline' = manually blocked by owner
+    customerName?: string; // Optional: for offline blocks, custom label
 }
 
 // ─── Location Interface ────────────────────────────────────────────
@@ -225,6 +229,45 @@ export const createBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt
         return docRef.id;
     } catch (error) {
         console.error("Error creating booking:", error);
+        throw error;
+    }
+};
+
+// Create an offline block: owner manually marks slots as booked (for walk-in/phone customers)
+export const createOfflineBlock = async (
+    turfId: string,
+    adminId: string,
+    date: string,
+    times: string[],
+    customerName?: string
+): Promise<string> => {
+    try {
+        const bookingsCol = collection(db, 'bookings');
+        const newBooking = {
+            userId: adminId,
+            turfId,
+            date,
+            times,
+            duration: 60 * times.length,
+            createdAt: new Date().toISOString(),
+            status: 'confirmed',
+            bookingType: 'offline',
+            ...(customerName ? { customerName } : {})
+        };
+        const docRef = await addDoc(bookingsCol, newBooking);
+        return docRef.id;
+    } catch (error) {
+        console.error('Error creating offline block:', error);
+        throw error;
+    }
+};
+
+// Delete a booking (used by owner to remove an offline block)
+export const deleteBooking = async (bookingId: string): Promise<void> => {
+    try {
+        await deleteDoc(doc(db, 'bookings', bookingId));
+    } catch (error) {
+        console.error('Error deleting booking:', error);
         throw error;
     }
 };

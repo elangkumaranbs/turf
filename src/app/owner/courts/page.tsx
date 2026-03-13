@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Select } from '@/components/ui/Select';
 import { formatTime12Hour } from '@/lib/utils';
+import { geocodeAddress } from '@/lib/geocoding';
 
 export default function MyCourtsPage() {
     const { user } = useAuth();
@@ -20,6 +21,8 @@ export default function MyCourtsPage() {
     const [editData, setEditData] = useState<Partial<Turf>>({});
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [locations, setLocations] = useState<{label: string, value: string}[]>([]);
+    const [editMapsLink, setEditMapsLink] = useState('');
+    const [editMapsLoading, setEditMapsLoading] = useState(false);
 
     const fetchData = async () => {
         if (user) {
@@ -67,15 +70,48 @@ export default function MyCourtsPage() {
             courts: turf.courts || 1,
             contactPhone: turf.contactPhone || '',
             contactEmail: turf.contactEmail || '',
+            lat: turf.lat,
+            lng: turf.lng,
         });
+    };
+
+    const fetchCoordsFromMapsLink = async () => {
+        if (!editMapsLink.trim()) return;
+        setEditMapsLoading(true);
+        try {
+            const res = await fetch(`/api/resolve-maps?url=${encodeURIComponent(editMapsLink)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to fetch coordinates');
+            setEditData(d => ({ ...d, lat: data.lat, lng: data.lng }));
+            setEditMapsLink('');
+            alert(`✓ Coordinates fetched: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Could not fetch coordinates from this link.');
+        } finally {
+            setEditMapsLoading(false);
+        }
     };
 
     const handleSaveEdit = async () => {
         if (!editingId) return;
         setActionLoading(editingId);
         try {
-            await updateTurf(editingId, editData);
-            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...editData } : t));
+            // Re-geocode only if lat/lng not manually set and address/city changed
+            let geoUpdate: { lat?: number; lng?: number } = {};
+            if (editData.lat != null && editData.lng != null) {
+                geoUpdate = { lat: editData.lat, lng: editData.lng };
+            } else if (editData.address || editData.city) {
+                const coords = await geocodeAddress(editData.address || '', editData.city || '');
+                if (coords) geoUpdate = { lat: coords.lat, lng: coords.lng };
+            }
+
+            // Sanitize undefined values before updating
+            const sanitized = Object.fromEntries(
+                Object.entries({ ...editData, ...geoUpdate }).filter(([, v]) => v !== undefined)
+            ) as typeof editData;
+
+            await updateTurf(editingId, sanitized);
+            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...sanitized } : t));
             setEditingId(null);
             setEditData({});
         } catch (error) {
@@ -202,6 +238,57 @@ export default function MyCourtsPage() {
                                             value={editData.contactEmail || ''}
                                             onChange={(e) => setEditData({ ...editData, contactEmail: e.target.value })}
                                         />
+                                        {/* GPS Coordinates Section */}
+                                        <div className="md:col-span-2 rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+                                            <label className="text-sm font-medium text-gray-300 block">GPS Coordinates <span className="text-gray-500 font-normal text-xs">(optional)</span></label>
+                                            <div className="flex gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Paste Google Maps link — https://maps.app.goo.gl/..."
+                                                    value={editMapsLink}
+                                                    onChange={(e) => setEditMapsLink(e.target.value)}
+                                                    className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={fetchCoordsFromMapsLink}
+                                                    disabled={!editMapsLink.trim() || editMapsLoading}
+                                                    className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                                                >
+                                                    {editMapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />}
+                                                    Fetch
+                                                </button>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-300 block mb-2">Latitude</label>
+                                                    <input
+                                                        type="number"
+                                                        step="any"
+                                                        placeholder="e.g. 11.4532"
+                                                        value={editData.lat != null ? String(editData.lat) : ''}
+                                                        onChange={(e) => setEditData({ ...editData, lat: e.target.value ? Number(e.target.value) : undefined })}
+                                                        className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-300 block mb-2">Longitude</label>
+                                                    <input
+                                                        type="number"
+                                                        step="any"
+                                                        placeholder="e.g. 77.7302"
+                                                        value={editData.lng != null ? String(editData.lng) : ''}
+                                                        onChange={(e) => setEditData({ ...editData, lng: e.target.value ? Number(e.target.value) : undefined })}
+                                                        className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {editData.lat != null && editData.lng != null && (
+                                                <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                                    <MapPin size={11} /> Coordinates set
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-300 ml-1 block mb-1">Description</label>
@@ -268,6 +355,14 @@ export default function MyCourtsPage() {
                                                 )}
                                                 <span className="capitalize px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
                                                     {turf.wicketType} Wicket
+                                                </span>
+                                                {/* GPS Status Badge */}
+                                                <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${turf.lat != null && turf.lng != null
+                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                                                    }`}>
+                                                    <MapPin size={12} className="inline mr-1" />
+                                                    {turf.lat != null && turf.lng != null ? 'GPS ✓' : 'No GPS'}
                                                 </span>
                                             </div>
                                         </div>
