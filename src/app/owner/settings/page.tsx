@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Loader2, Save, CheckCircle, Camera, User, Phone, Mail, Building, MapPin, Shield } from 'lucide-react';
 import Image from 'next/image';
+import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 
 export default function OwnerSettingsPage() {
     const { user } = useAuth();
@@ -280,6 +281,11 @@ export default function OwnerSettingsPage() {
                         </div>
                     </div>
                 </div>
+            </GlassCard>
+
+            {/* Security Section (Change Password) */}
+            <GlassCard className="p-5 sm:p-8 border-white/10 max-w-2xl">
+                <ChangePasswordForm />
             </GlassCard>
         </div>
     );

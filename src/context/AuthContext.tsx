@@ -7,7 +7,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 // ─── Super Admin Email ──────────────────────────────────────────────
-export const SUPER_ADMIN_EMAIL = 'gamedenofficial@gmail.com';
+export const SUPER_ADMIN_EMAIL = 'gamedenoffiz@gmail.com';
 
 interface UserData {
     uid: string;

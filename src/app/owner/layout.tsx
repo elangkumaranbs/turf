@@ -81,9 +81,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     const allLinks = user.role === 'super_admin'
         ? [
             ...sidebarLinks,
-            { name: 'Manage All Courts', href: '/admin/courts', icon: Building2 },
-            { name: 'Manage Locations', href: '/admin/locations', icon: MapPinned },
-            { name: 'Manage Users', href: '/admin/users', icon: Users }
+            { name: 'Manage All Courts', href: '/owner/manage-courts', icon: Building2 },
+            { name: 'Manage Locations', href: '/owner/manage-locations', icon: MapPinned },
+            { name: 'Manage Users', href: '/owner/manage-users', icon: Users }
         ]
         : sidebarLinks;
 

@@ -21,7 +21,7 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isAuthenticated() && 
              (getUserData().role == 'super_admin' || 
-              request.auth.token.email == 'gamedenofficial@gmail.com');
+              request.auth.token.email == 'gamedenoffiz@gmail.com');
     }
     
     // Check if user is turf admin (owner)

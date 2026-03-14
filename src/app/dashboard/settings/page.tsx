@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { Loader2, Save, CheckCircle, Camera, User, Shield, Loader } from 'lucide-react';
 import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
+import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 
 export default function UserSettingsPage() {
     const { user } = useAuth();
@@ -316,6 +317,11 @@ export default function UserSettingsPage() {
                                     <p className="text-xs text-gray-500">Control who can see your bookings</p>
                                 </div>
                             </div>
+                        </GlassCard>
+
+                        {/* Security Section (Change Password) */}
+                        <GlassCard className="p-6 sm:p-8 border-white/10 mt-6 animate-fade-up" style={{ animationDelay: '0.4s' }}>
+                            <ChangePasswordForm />
                         </GlassCard>
                     </div>
                 </div>

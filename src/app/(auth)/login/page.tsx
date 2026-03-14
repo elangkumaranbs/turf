@@ -98,14 +98,21 @@ export default function LoginPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                         />
-                        <Input
-                            label="Password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <div className="space-y-2">
+                            <Input
+                                label="Password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <div className="flex justify-end">
+                                <Link href="/forgot-password" className="text-sm text-[var(--turf-green)] hover:underline font-medium">
+                                    Forgot password?
+                                </Link>
+                            </div>
+                        </div>
 
                         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
