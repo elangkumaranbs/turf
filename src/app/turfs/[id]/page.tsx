@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getTurfById, Turf } from '@/lib/firebase/firestore';
+import { getTurfById, getUserById, Turf } from '@/lib/firebase/firestore';
 import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images } from 'lucide-react';
 import Image from 'next/image';
 import { createBooking, createPendingOrder, deletePendingOrder } from '@/lib/firebase/firestore';
@@ -13,6 +13,7 @@ import { SlotPicker } from '@/components/SlotPicker';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createRazorpayOrder, initiatePayment, verifyPayment } from '@/lib/razorpay';
 import type { RazorpaySuccessResponse } from '@/lib/razorpay';
+import { sendBookingEmails } from '@/lib/emailjs';
 
 export default function TurfDetailsPage() {
     const params = useParams();
@@ -122,6 +123,27 @@ export default function TurfDetailsPage() {
 
                             // Step 6: Remove slot lock
                             await deletePendingOrder(orderData.orderId);
+
+                            // Step 7: Send booking notification emails (fire-and-forget)
+                            try {
+                                const ownerData = await getUserById(turf.adminId);
+                                const turfLocation = [turf.address, turf.city].filter(Boolean).join(', ') || turf.location || '';
+                                const ownerEmail = turf.contactEmail || ownerData?.email || '';
+                                sendBookingEmails({
+                                    turfName: turf.name,
+                                    turfLocation,
+                                    bookingDate: date,
+                                    bookingSlots: times.join(', '),
+                                    amountPaid: totalAmount,
+                                    customerName: user.displayName || 'Customer',
+                                    customerEmail: user.email || '',
+                                    customerPhone: user.phone || '',
+                                    ownerName: ownerData?.name || 'Turf Owner',
+                                    ownerEmail,
+                                });
+                            } catch (emailError) {
+                                console.error('Email notification error (non-blocking):', emailError);
+                            }
 
                             alert('🎉 Payment Successful! Your booking is confirmed.');
                             router.push('/dashboard');

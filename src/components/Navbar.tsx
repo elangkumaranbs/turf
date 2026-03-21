@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
+
 import { Button } from './ui/Button';
-import { Menu, X, User as UserIcon, LogOut, Sun, Moon } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Navbar = () => {
     const { user, loading, logout } = useAuth();
-    const { theme, toggleTheme } = useTheme();
+
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -71,16 +71,8 @@ export const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Theme Toggle & Auth */}
+                {/* Auth */}
                 <div className="flex items-center space-x-2 sm:space-x-4">
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                        title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                        aria-label="Toggle theme"
-                    >
-                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
 
                     {!loading && (
                         <div className="hidden md:block">

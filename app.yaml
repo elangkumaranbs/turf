@@ -1,0 +1,25 @@
+name: elan-turf
+region: blr1
+services:
+  - name: turf-frontend
+    github:
+      repo: elangkumaranbs/turf
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    envs:
+      - key: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+        value: djpkmyioi
+      - key: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+        value: turf_images
+      - key: NEXT_PUBLIC_RAZORPAY_KEY_ID
+        value: rzp_live_SPXyF1wC8Iqvbo
+      - key: RAZORPAY_KEY_SECRET
+        type: SECRET
+        value: Tirgm32t0X28YE4SCxs6e16A
