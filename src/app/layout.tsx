@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     google: "pnWcbbYFRobhybMtX1aizDsWGMd7aBnw81huBbTSW4w",
   },
   title: {
-    default: "TurfGameDen – Book Premium Cricket Turfs in Gobi, Sathy & Tamil Nadu | Online Turf Booking",
+    default: "TurfGameDen (GameDen) – Book Premium Cricket Turfs in Gobi, Sathy & Tamil Nadu | Online Turf Booking",
     template: "%s | TurfGameDen",
   },
   description:
