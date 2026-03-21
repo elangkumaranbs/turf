@@ -49,7 +49,7 @@ export default function AddTurfPage() {
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setImages(Array.from(e.target.files));
+            setImages(prev => [...prev, ...Array.from(e.target.files!)]);
         }
     };
 

@@ -583,7 +583,7 @@ export default function AdminCourtsPage() {
                                                 </div>
                                                 {editImageMode === 'upload' ? (
                                                     <div className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-[var(--turf-green)] transition-colors relative group">
-                                                        <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files) setEditImages([...editImages, ...Array.from(e.target.files)]); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                        <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files) setEditImages(prev => [...prev, ...Array.from(e.target.files!)]); }} className="absolute inset-0 opacity-0 cursor-pointer" />
                                                         <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-[var(--turf-green)] transition-colors">
                                                             <Upload className="w-8 h-8" />
                                                             <span className="text-sm">{editImages.length > 0 ? `${editImages.length} new file${editImages.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}</span>
@@ -791,7 +791,7 @@ export default function AdminCourtsPage() {
                                     </div>
                                     {createImageMode === 'upload' ? (
                                         <div className="border border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:border-[var(--turf-green)] transition-colors relative group">
-                                            <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files) setCreateImages(Array.from(e.target.files)); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                            <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files) setCreateImages(prev => [...prev, ...Array.from(e.target.files!)]); }} className="absolute inset-0 opacity-0 cursor-pointer" />
                                             <div className="flex flex-col items-center gap-3 text-gray-400 group-hover:text-[var(--turf-green)] transition-colors">
                                                 <Upload className="w-10 h-10" />
                                                 <span className="text-sm">{createImages.length > 0 ? `${createImages.length} file${createImages.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}</span>

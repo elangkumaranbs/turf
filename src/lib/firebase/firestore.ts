@@ -44,6 +44,25 @@ export interface Booking {
     status: 'confirmed' | 'cancelled' | 'pending';
     bookingType?: 'online' | 'offline'; // 'offline' = manually blocked by owner
     customerName?: string; // Optional: for offline blocks, custom label
+    // Payment fields (Razorpay)
+    paymentId?: string;        // Razorpay payment ID
+    orderId?: string;          // Razorpay order ID
+    amountPaid?: number;       // Amount paid in paise
+    refundId?: string;         // Razorpay refund ID (if cancelled)
+    refundStatus?: 'initiated' | 'processed' | 'failed'; // Refund status
+    cancelledAt?: string;      // ISO timestamp of cancellation
+}
+
+// ─── Pending Order Interface (slot locking) ───────────────────────
+export interface PendingOrder {
+    id?: string;
+    turfId: string;
+    date: string;
+    slots: string[];
+    userId: string;
+    orderId: string;
+    expiresAt: string; // ISO timestamp — 10 min from creation
+    createdAt: string;
 }
 
 // ─── Location Interface ────────────────────────────────────────────
@@ -217,19 +236,86 @@ export const deleteTurf = async (turfId: string): Promise<void> => {
 //  BOOKING OPERATIONS
 // ═══════════════════════════════════════════════════════════════════
 
-export const createBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status'>): Promise<string> => {
+export const createBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status'> & { status?: string }): Promise<string> => {
     try {
         const bookingsCol = collection(db, 'bookings');
         const newBooking = {
             ...bookingData,
             createdAt: new Date().toISOString(),
-            status: 'confirmed'
+            status: bookingData.status || 'confirmed'
         };
         const docRef = await addDoc(bookingsCol, newBooking);
         return docRef.id;
     } catch (error) {
         console.error("Error creating booking:", error);
         throw error;
+    }
+};
+
+// Cancel a booking and store cancellation metadata
+export const cancelBooking = async (bookingId: string, refundData?: {
+    refundId?: string;
+    refundStatus?: 'initiated' | 'processed' | 'failed';
+}): Promise<void> => {
+    try {
+        const bookingRef = doc(db, 'bookings', bookingId);
+        await updateDoc(bookingRef, {
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString(),
+            ...(refundData || {})
+        });
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        throw error;
+    }
+};
+
+// ─── Pending Orders (slot locking) ────────────────────────────────
+
+export const createPendingOrder = async (data: Omit<PendingOrder, 'id' | 'createdAt' | 'expiresAt'>): Promise<string> => {
+    try {
+        const col = collection(db, 'pending_orders');
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
+        const docRef = await addDoc(col, {
+            ...data,
+            createdAt: now.toISOString(),
+            expiresAt: expiresAt.toISOString()
+        });
+        return docRef.id;
+    } catch (error) {
+        console.error('Error creating pending order:', error);
+        throw error;
+    }
+};
+
+export const deletePendingOrder = async (orderId: string): Promise<void> => {
+    try {
+        // Find by razorpay orderId field
+        const col = collection(db, 'pending_orders');
+        const q = query(col, where('orderId', '==', orderId));
+        const snapshot = await getDocs(q);
+        const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, 'pending_orders', d.id)));
+        await Promise.all(deletePromises);
+    } catch (error) {
+        console.error('Error deleting pending order:', error);
+        throw error;
+    }
+};
+
+export const getPendingOrdersForTurf = async (turfId: string, date: string): Promise<PendingOrder[]> => {
+    try {
+        const col = collection(db, 'pending_orders');
+        const q = query(col, where('turfId', '==', turfId), where('date', '==', date));
+        const snapshot = await getDocs(q);
+        const now = new Date();
+        // Filter out expired pending orders
+        return snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() } as PendingOrder))
+            .filter(po => new Date(po.expiresAt) > now);
+    } catch (error) {
+        console.error('Error fetching pending orders:', error);
+        return [];
     }
 };
 

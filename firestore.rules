@@ -132,6 +132,25 @@ service cloud.firestore {
     }
     
     // ──────────────────────────────────────────────────────────────
+    // PENDING ORDERS Collection (slot locking during payment)
+    // ──────────────────────────────────────────────────────────────
+    match /pending_orders/{orderId} {
+      // Everyone can read pending orders (needed for slot availability on public turf pages)
+      allow read: if true;
+      allow list: if true;
+      
+      // Authenticated users can create pending orders
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Owner can delete their own pending order, or super admin
+      allow delete: if isOwner(resource.data.userId) || isSuperAdmin();
+      
+      // No updates needed — pending orders are created and deleted only
+      allow update: if false;
+    }
+    
+    // ──────────────────────────────────────────────────────────────
     // Default: Deny all other collections
     // ──────────────────────────────────────────────────────────────
     match /{document=**} {

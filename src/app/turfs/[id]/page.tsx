@@ -7,10 +7,12 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { getTurfById, Turf } from '@/lib/firebase/firestore';
 import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images } from 'lucide-react';
 import Image from 'next/image';
-import { createBooking } from '@/lib/firebase/firestore';
+import { createBooking, createPendingOrder, deletePendingOrder } from '@/lib/firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { SlotPicker } from '@/components/SlotPicker';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { createRazorpayOrder, initiatePayment, verifyPayment } from '@/lib/razorpay';
+import type { RazorpaySuccessResponse } from '@/lib/razorpay';
 
 export default function TurfDetailsPage() {
     const params = useParams();
@@ -57,22 +59,94 @@ export default function TurfDetailsPage() {
 
     const handleBooking = async (date: string, times: string[]) => {
         if (!turf || !user) return;
+
+        const totalAmount = times.length * turf.pricePerHour;
+
         try {
-            await createBooking({
+            // Step 1: Create Razorpay order
+            const orderData = await createRazorpayOrder({
+                amount: totalAmount,
+                turfId: turf.id,
+                turfName: turf.name,
+                slots: times,
+                date,
                 userId: user.uid,
+            });
+
+            // Step 2: Create pending order (slot lock)
+            await createPendingOrder({
                 turfId: turf.id,
                 date,
-                times,
-                duration: 60 * times.length
+                slots: times,
+                userId: user.uid,
+                orderId: orderData.orderId,
             });
-            alert('Booking Confirmed!');
-            router.push('/dashboard');
+
+            // Step 3: Open Razorpay checkout
+            await initiatePayment({
+                orderId: orderData.orderId,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                turfName: turf.name,
+                userName: user.displayName || '',
+                userEmail: user.email || '',
+                onSuccess: async (response) => {
+                    try {
+                        // Step 4: Verify payment signature on server
+                        const verification = await verifyPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            bookingData: {
+                                userId: user.uid,
+                                turfId: turf.id,
+                                date,
+                                times,
+                            },
+                        });
+
+                        if (verification.verified) {
+                            // Step 5: Create confirmed booking with payment details
+                            await createBooking({
+                                userId: user.uid,
+                                turfId: turf.id,
+                                date,
+                                times,
+                                duration: 60 * times.length,
+                                paymentId: verification.paymentId,
+                                orderId: verification.orderId,
+                                amountPaid: orderData.amount,
+                                bookingType: 'online',
+                            });
+
+                            // Step 6: Remove slot lock
+                            await deletePendingOrder(orderData.orderId);
+
+                            alert('🎉 Payment Successful! Your booking is confirmed.');
+                            router.push('/dashboard');
+                        }
+                    } catch (verifyError: any) {
+                        console.error('Verification error:', verifyError);
+                        alert(`Payment received but verification failed. Please contact support with Payment ID: ${response.razorpay_payment_id}`);
+                    }
+                },
+                onFailure: async (error) => {
+                    console.error('Payment failed:', error);
+                    // Clean up pending order on failure
+                    await deletePendingOrder(orderData.orderId);
+                    alert(`Payment failed: ${error.description || 'Please try again.'}`);
+                },
+                onDismiss: async () => {
+                    // Clean up pending order when user closes modal
+                    await deletePendingOrder(orderData.orderId);
+                },
+            });
         } catch (error: any) {
             console.error('Booking error:', error);
-            if (error.code === 'permission-denied') {
-                alert('Permission Denied: Please check Firestore Security Rules.');
+            if (error.message?.includes('Too many requests')) {
+                alert('Too many attempts. Please wait a minute and try again.');
             } else {
-                alert(`Failed to book slot: ${error.message}`);
+                alert(`Failed to initiate payment: ${error.message}`);
             }
         }
     };

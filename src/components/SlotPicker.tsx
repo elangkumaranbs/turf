@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getBookingsForTurf, Booking } from '@/lib/firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { getBookingsForTurf, Booking, getPendingOrdersForTurf, PendingOrder } from '@/lib/firebase/firestore';
+import { Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -47,6 +47,7 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
     const [loading, setLoading] = useState(false);
     const [selectedTimes, setSelectedTimes] = useState<string[]>(initialTime ? [initialTime] : []);
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
 
     // Derive time slots from operating hours
     const timeSlots = operatingHours
@@ -60,8 +61,12 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
         const fetchBookings = async () => {
             setLoading(true);
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            const data = await getBookingsForTurf(turfId, dateStr);
+            const [data, pending] = await Promise.all([
+                getBookingsForTurf(turfId, dateStr),
+                getPendingOrdersForTurf(turfId, dateStr),
+            ]);
             setBookings(data);
+            setPendingOrders(pending);
             setLoading(false);
         };
         fetchBookings();
@@ -70,12 +75,15 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
     const isSlotBooked = (time: string) => {
         return bookings.some(b => {
             if (b.status === 'cancelled') return false;
-            // Support both old single-time and new multi-time bookings
             if (b.times && b.times.length > 0) {
                 return b.times.includes(time);
             }
             return b.time === time;
         });
+    };
+
+    const isSlotLocked = (time: string) => {
+        return pendingOrders.some(po => po.slots.includes(time) && po.userId !== (user?.uid || ''));
     };
 
     const isSlotPast = (time: string) => {
@@ -104,10 +112,14 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
             await onBook(format(selectedDate, 'yyyy-MM-dd'), selectedTimes);
             setBookingLoading(false);
             setSelectedTimes([]);
-            // Refresh bookings
+            // Refresh bookings and pending orders
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            const data = await getBookingsForTurf(turfId, dateStr);
+            const [data, pending] = await Promise.all([
+                getBookingsForTurf(turfId, dateStr),
+                getPendingOrdersForTurf(turfId, dateStr),
+            ]);
             setBookings(data);
+            setPendingOrders(pending);
         }
     };
 
@@ -153,16 +165,17 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                         {timeSlots.map((time) => {
                             const booked = isSlotBooked(time);
+                            const locked = isSlotLocked(time);
                             const past = isSlotPast(time);
                             const isSelected = selectedTimes.includes(time);
-                            const isDisabled = booked || past;
+                            const isDisabled = booked || past || locked;
 
                             return (
                                 <button
                                     key={time}
                                     disabled={isDisabled}
                                     onClick={() => toggleSlot(time)}
-                                    className={`p-2.5 sm:p-2 rounded-lg text-sm sm:text-base font-medium border transition-all ${isDisabled
+                                    className={`p-2.5 sm:p-2 rounded-lg text-sm sm:text-base font-medium border transition-all relative ${isDisabled
                                         ? 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed opacity-50'
                                         : isSelected
                                             ? 'bg-[var(--turf-green)] border-[var(--turf-green)] text-black shadow-[0_0_15px_rgba(46,204,113,0.4)]'
@@ -170,6 +183,9 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                                         }`}
                                 >
                                     {time}
+                                    {locked && (
+                                        <Lock className="absolute top-1 right-1 w-3 h-3 text-yellow-500" />
+                                    )}
                                 </button>
                             );
                         })}
@@ -214,11 +230,17 @@ export const SlotPicker = ({ turfId, pricePerHour, onBook, operatingHours, initi
                 >
                     {user
                         ? selectedTimes.length > 0
-                            ? `Confirm Booking (₹${totalPrice})`
+                            ? `Pay ₹${totalPrice} & Book`
                             : 'Select Time Slots'
                         : 'Login to Book'
                     }
                 </Button>
+                {selectedTimes.length > 0 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-gray-400">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[var(--turf-green)]" />
+                        Secured by Razorpay • UPI, Cards, Net Banking, Wallets
+                    </div>
+                )}
             </GlassCard>
         </div>
     );

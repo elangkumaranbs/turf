@@ -6,10 +6,11 @@ import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getBookingsByUser, Booking, getTurfById, getSuperAdminStats, AdminStatistics } from '@/lib/firebase/firestore';
-import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, Star, User as UserIcon, LogOut, ShieldCheck, Building2, Users, IndianRupee, ChevronDown, ChevronUp, CalendarCheck } from 'lucide-react';
+import { getBookingsByUser, Booking, getTurfById, getSuperAdminStats, AdminStatistics, cancelBooking } from '@/lib/firebase/firestore';
+import { Loader2, Calendar, Clock, MapPin, AlertCircle, Plus, TrendingUp, Star, User as UserIcon, LogOut, ShieldCheck, Building2, Users, IndianRupee, ChevronDown, ChevronUp, CalendarCheck, XCircle, CreditCard, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { SkeletonStats, SkeletonBooking } from '@/components/ui/SkeletonLoader';
+import { requestRefund } from '@/lib/razorpay';
 
 export default function DashboardPage() {
     const { user, loading: authLoading, logout } = useAuth();
@@ -19,6 +20,7 @@ export default function DashboardPage() {
     const [adminStats, setAdminStats] = useState<AdminStatistics[]>([]);
     const [adminStatsLoading, setAdminStatsLoading] = useState(false);
     const [expandedAdmins, setExpandedAdmins] = useState<Set<string>>(new Set());
+    const [cancellingId, setCancellingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -161,6 +163,70 @@ export default function DashboardPage() {
             border: 'border-purple-500/20',
         },
     ];
+
+    // Check if a booking is in the future (can be cancelled)
+    const isFutureBooking = (booking: Booking) => {
+        const bookingDate = new Date(booking.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return bookingDate >= today;
+    };
+
+    // Handle booking cancellation with refund
+    const handleCancelBooking = async (booking: Booking & { turfName?: string }) => {
+        if (!booking.id) return;
+
+        const confirmMsg = booking.paymentId
+            ? `Cancel booking at ${booking.turfName}?\n\nA full refund of ₹${((booking.amountPaid || 0) / 100).toLocaleString('en-IN')} will be processed to your original payment method.\n\nThis action cannot be undone.`
+            : `Cancel booking at ${booking.turfName}?\n\nThis action cannot be undone.`;
+
+        if (!window.confirm(confirmMsg)) return;
+
+        setCancellingId(booking.id);
+        try {
+            // Process refund if payment was made
+            if (booking.paymentId) {
+                const refundResult = await requestRefund({
+                    paymentId: booking.paymentId,
+                    bookingId: booking.id,
+                });
+
+                await cancelBooking(booking.id, {
+                    refundId: refundResult.refundId,
+                    refundStatus: 'processed',
+                });
+            } else {
+                await cancelBooking(booking.id);
+            }
+
+            // Refresh bookings
+            const userBookings = await getBookingsByUser(user!.uid);
+            const enrichedBookings = await Promise.all(
+                userBookings.map(async (b) => {
+                    const turf = await getTurfById(b.turfId);
+                    let location = 'Location not available';
+                    if (turf) {
+                        if (turf.city && turf.address) location = `${turf.address}, ${turf.city}`;
+                        else if (turf.city) location = turf.city;
+                        else if (turf.address) location = turf.address;
+                        else if (turf.location) location = turf.location;
+                    }
+                    return { ...b, turfName: turf?.name || 'Unknown Turf', location };
+                })
+            );
+            setBookings(enrichedBookings);
+
+            alert(booking.paymentId
+                ? '✅ Booking cancelled and refund initiated. It may take 5-10 business days to reflect.'
+                : '✅ Booking cancelled successfully.'
+            );
+        } catch (error: any) {
+            console.error('Cancel error:', error);
+            alert(`Failed to cancel booking: ${error.message}`);
+        } finally {
+            setCancellingId(null);
+        }
+    };
 
     return (
         <main className="min-h-screen bg-[var(--background)] pb-12 relative overflow-hidden">
@@ -380,12 +446,38 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="hidden sm:flex flex-col items-end gap-3 min-w-[120px]">
+                                        <div className="hidden sm:flex flex-col items-end gap-3 min-w-[140px]">
                                             <span className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
                                                 booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'
                                                 }`}>
                                                 {booking.status}
                                             </span>
+                                            {booking.paymentId && (
+                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <CreditCard className="w-3 h-3" />
+                                                    <span>#{booking.paymentId.slice(-8)}</span>
+                                                </div>
+                                            )}
+                                            {booking.refundStatus && (
+                                                <div className="flex items-center gap-1 text-xs">
+                                                    <RefreshCw className="w-3 h-3 text-blue-400" />
+                                                    <span className="text-blue-400 font-medium capitalize">Refund {booking.refundStatus}</span>
+                                                </div>
+                                            )}
+                                            {booking.status === 'confirmed' && isFutureBooking(booking) && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleCancelBooking(booking); }}
+                                                    disabled={cancellingId === booking.id}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 border border-red-500/20 hover:bg-red-500/10 hover:border-red-500/40 transition-all disabled:opacity-50"
+                                                >
+                                                    {cancellingId === booking.id ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        <XCircle className="w-3 h-3" />
+                                                    )}
+                                                    {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
+                                                </button>
+                                            )}
                                             <span className="text-sm font-bold text-white bg-white/5 px-3 py-1 rounded-md">#{booking.id?.slice(-6).toUpperCase() || 'ID'}</span>
                                         </div>
                                     </GlassCard>
