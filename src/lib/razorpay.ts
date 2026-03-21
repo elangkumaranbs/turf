@@ -83,6 +83,7 @@ export const initiatePayment = async (options: PaymentOptions): Promise<void> =>
         prefill: {
             name: userName || '',
             email: userEmail || '',
+            contact: userPhone || '',
         },
         theme: {
             color: '#2ecc71',

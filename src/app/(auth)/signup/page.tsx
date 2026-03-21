@@ -16,6 +16,7 @@ export default function SignupPage() {
     const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,6 +35,7 @@ export default function SignupPage() {
                     uid: user.uid,
                     name: user.displayName || 'User',
                     email: user.email || '',
+                    phone: phone || '',
                     role,
                     createdAt: new Date().toISOString()
                 });
@@ -123,6 +125,14 @@ export default function SignupPage() {
                             placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                        <Input
+                            label="Phone Number"
+                            type="tel"
+                            placeholder="+91 98765 43210"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
                             required
                         />
                         <Input

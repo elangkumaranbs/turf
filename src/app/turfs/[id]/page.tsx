@@ -90,6 +90,7 @@ export default function TurfDetailsPage() {
                 turfName: turf.name,
                 userName: user.displayName || '',
                 userEmail: user.email || '',
+                userPhone: user.phone || '',
                 onSuccess: async (response) => {
                     try {
                         // Step 4: Verify payment signature on server
