@@ -10,6 +10,9 @@ const SITE_URL = "https://turfgameden.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  verification: {
+    google: "pnWcbbYFRobhybMtX1aizDsWGMd7aBnw81huBbTSW4w",
+  },
   title: {
     default: "TurfGameDen – Book Premium Cricket Turfs in Gobi, Sathy & Tamil Nadu | Online Turf Booking",
     template: "%s | TurfGameDen",
