@@ -104,7 +104,7 @@ export const initiatePayment = async (options: PaymentOptions): Promise<void> =>
                     utib: {
                         name: 'Pay using',
                         instruments: [
-                            { method: 'upi' },
+                            { method: 'upi', flows: ['intent'] },
                             { method: 'card' },
                             { method: 'netbanking' },
                             { method: 'wallet' },
@@ -119,6 +119,7 @@ export const initiatePayment = async (options: PaymentOptions): Promise<void> =>
                 },
             },
         },
+        webview_intent: true,
         // Retry on failure
         retry: {
             enabled: true,
