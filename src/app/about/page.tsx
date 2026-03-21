@@ -1,6 +1,19 @@
 import { Navbar } from "@/components/Navbar";
 import { ShieldCheck, Target, Users, MapPin } from "lucide-react";
 import Image from "next/image";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "About TurfGameDen – Premium Turf Booking Platform in Tamil Nadu",
+    description:
+        "Learn about TurfGameDen, Tamil Nadu's leading turf booking platform serving Gobi, Sathy, Erode & Tiruppur. Our mission is to connect players with premium, verified cricket turfs. Built by Elangkumaran BS.",
+    alternates: { canonical: "/about" },
+    openGraph: {
+        title: "About TurfGameDen – Who We Are",
+        description: "TurfGameDen connects passionate cricket players with premium turfs across Tamil Nadu. Verified venues, instant booking, community-first approach.",
+        url: "/about",
+    },
+};
 
 export default function AboutPage() {
     return (
