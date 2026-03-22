@@ -145,6 +145,21 @@ export default function TurfDetailsPage() {
                                 console.error('Email notification error (non-blocking):', emailError);
                             }
 
+                            // Step 8: Send FCM Push Notification (fire-and-forget)
+                            try {
+                                fetch('/api/notifications', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        targetUserId: user.uid,
+                                        title: 'Booking Confirmed! 🏏',
+                                        body: `You are all set to play at ${turf.name} at ${times.join(', ')}. See you on the pitch!`,
+                                    })
+                                }).catch(err => console.error('Failed to trigger push notification:', err));
+                            } catch (pushError) {
+                                console.error('Push notification trigger error (non-blocking):', pushError);
+                            }
+
                             alert('🎉 Payment Successful! Your booking is confirmed.');
                             router.push('/dashboard');
                         }
