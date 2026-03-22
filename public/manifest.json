@@ -1,0 +1,16 @@
+{
+  "name": "TurfGameDen",
+  "short_name": "TurfGameDen",
+  "description": "Book Premium Cricket Turfs Instantly",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/location type logo 001.png",
+      "sizes": "192x192 512x512 any",
+      "type": "image/png"
+    }
+  ]
+}

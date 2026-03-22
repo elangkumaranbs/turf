@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -9,7 +9,23 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 const SITE_URL = "https://turfgameden.com";
 
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TurfGameDen",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   metadataBase: new URL(SITE_URL),
   verification: {
     google: "pnWcbbYFRobhybMtX1aizDsWGMd7aBnw81huBbTSW4w",
