@@ -24,8 +24,8 @@ export default function ContactPage() {
                         <Phone className="text-[var(--turf-green)] w-8 h-8 flex-shrink-0" />
                         <div>
                             <h3 className="text-white text-xl font-bold mb-2">Phone Support</h3>
-                            <p className="text-gray-400 mb-2">Call us during business hours limit (10 AM - 6 PM IST).</p>
-                            <a href="tel:+919876543210" className="text-white font-medium">+91 9876543210</a>
+                            <p className="text-gray-400 mb-2">Call us during business hours (10 AM - 6 PM IST).</p>
+                            <a href="tel:+919025516930" className="text-white font-medium">+91 9025516930</a>
                         </div>
                     </div>
 
@@ -34,10 +34,9 @@ export default function ContactPage() {
                         <div>
                             <h3 className="text-white text-xl font-bold mb-2">Operating Address</h3>
                             <p className="text-gray-400 leading-relaxed">
-                                TurfGameDen Operations<br />
-                                123 Main Street<br />
-                                Gobichettipalayam, Tamil Nadu - 638452<br />
-                                India
+                                1e shanthinagar<br />
+                                gobichettipalayam 638452<br />
+                                Tamil Nadu, India
                             </p>
                         </div>
                     </div>

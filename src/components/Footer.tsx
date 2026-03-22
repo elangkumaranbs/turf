@@ -32,8 +32,11 @@ export const Footer = () => {
                         </ul>
                     </div>
                 </div>
-                <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-500">
-                    &copy; {new Date().getFullYear()} TurfGameDen. All rights reserved.
+                <div className="border-t border-white/10 mt-8 pt-8 text-center text-sm text-gray-500 flex flex-col items-center space-y-2">
+                    <p>&copy; {new Date().getFullYear()} TurfGameDen. All rights reserved.</p>
+                    <p className="text-xs text-gray-600 font-medium tracking-wide">
+                        Developed by <span className="text-[var(--turf-green)] font-bold">elangkumaran bs</span>
+                    </p>
                 </div>
             </div>
         </footer>
