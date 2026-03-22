@@ -27,7 +27,7 @@ export const Footer = () => {
                     <div>
                         <h4 className="text-white font-semibold mb-4">Contact</h4>
                         <ul className="space-y-2 text-sm text-gray-400">
-                            <li>Email: support@turfgameden.com</li>
+                            <li>Email: turfgameden@gmail.com</li>
                             <li><Link href="/contact" className="hover:text-[var(--turf-green)] transition-colors">Contact Us</Link></li>
                         </ul>
                     </div>

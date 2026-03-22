@@ -16,7 +16,7 @@ export default function ContactPage() {
                         <div>
                             <h3 className="text-white text-xl font-bold mb-2">Email Support</h3>
                             <p className="text-gray-400 mb-2">Send us an email anytime. We usually respond within 24 hours.</p>
-                            <a href="mailto:support@turfgameden.com" className="text-[var(--turf-green)] hover:underline font-medium">support@turfgameden.com</a>
+                            <a href="mailto:turfgameden@gmail.com" className="text-[var(--turf-green)] hover:underline font-medium">turfgameden@gmail.com</a>
                         </div>
                     </div>
                     
