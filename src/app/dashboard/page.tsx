@@ -444,6 +444,24 @@ export default function DashboardPage() {
                                                         : booking.time || 'N/A'
                                                     }
                                                 </div>
+                                                
+                                                {/* Mobile Cancel Button */}
+                                                <div className="w-full sm:hidden mt-2">
+                                                    {booking.status === 'confirmed' && isFutureBooking(booking) && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleCancelBooking(booking); }}
+                                                            disabled={cancellingId === booking.id}
+                                                            className="w-full flex justify-center items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-bold text-red-400 border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 transition-all disabled:opacity-50 mt-1"
+                                                        >
+                                                            {cancellingId === booking.id ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                <XCircle className="w-4 h-4" />
+                                                            )}
+                                                            {cancellingId === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="hidden sm:flex flex-col items-end gap-3 min-w-[140px]">
