@@ -145,17 +145,31 @@ export default function TurfDetailsPage() {
                                 console.error('Email notification error (non-blocking):', emailError);
                             }
 
-                            // Step 8: Send FCM Push Notification (fire-and-forget)
+                            // Step 8: Send Custom FCM Push Notifications (fire-and-forget)
                             try {
+                                // 1. Customer Notification
                                 fetch('/api/notifications', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
                                         targetUserId: user.uid,
-                                        title: 'Booking Confirmed! 🏏',
-                                        body: `You are all set to play at ${turf.name} at ${times.join(', ')}. See you on the pitch!`,
+                                        title: "You're all set! 🏏",
+                                        body: `Your match at ${turf.name} is confirmed for ${new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${times.join(', ')}.`
                                     })
-                                }).catch(err => console.error('Failed to trigger push notification:', err));
+                                }).catch(err => console.error('Failed to trigger customer push notification:', err));
+
+                                // 2. Turf Owner Notification
+                                if (turf.adminId) {
+                                    fetch('/api/notifications', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            targetUserId: turf.adminId, // Owner
+                                            title: "New Booking Received! 💰",
+                                            body: `[${user.displayName || 'A Player'}] just paid ₹${(totalAmount / 100).toLocaleString('en-IN')} for ${turf.name}.`
+                                        })
+                                    }).catch(err => console.error('Failed to trigger owner push notification:', err));
+                                }
                             } catch (pushError) {
                                 console.error('Push notification trigger error (non-blocking):', pushError);
                             }

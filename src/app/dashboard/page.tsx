@@ -216,6 +216,23 @@ export default function DashboardPage() {
             );
             setBookings(enrichedBookings);
 
+            if (booking.paymentId) {
+                // Send FCM Push Notification for Refund
+                try {
+                    fetch('/api/notifications', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            targetUserId: user!.uid,
+                            title: 'Refund Initiated 💸',
+                            body: `Your booking was cancelled. A refund of ₹${((booking.amountPaid || 0) / 100).toLocaleString('en-IN')} is making its way back to your bank account.`
+                        })
+                    }).catch(err => console.error('Failed to trigger refund notification:', err));
+                } catch (pushErr) {
+                    console.error('Push notification trigger error (non-blocking):', pushErr);
+                }
+            }
+
             alert(booking.paymentId
                 ? '✅ Booking cancelled and refund initiated. It may take 5-10 business days to reflect.'
                 : '✅ Booking cancelled successfully.'
