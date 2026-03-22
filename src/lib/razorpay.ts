@@ -175,7 +175,7 @@ export const verifyPayment = async (data: {
     razorpay_payment_id: string;
     razorpay_signature: string;
     bookingData: any;
-}): Promise<{ verified: boolean; paymentId: string; orderId: string }> => {
+}): Promise<{ verified: boolean; paymentId: string; orderId: string; contactPhone?: string }> => {
     const response = await fetch('/api/razorpay/verify-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

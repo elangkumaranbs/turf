@@ -137,7 +137,7 @@ export default function TurfDetailsPage() {
                                     amountPaid: totalAmount,
                                     customerName: user.displayName || 'Customer',
                                     customerEmail: user.email || '',
-                                    customerPhone: user.phone || '',
+                                    customerPhone: verification.contactPhone || user.phone || '',
                                     ownerName: ownerData?.name || 'Turf Owner',
                                     ownerEmail,
                                 });

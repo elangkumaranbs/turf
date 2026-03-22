@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
+
+const razorpay = new Razorpay({
+    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 export async function POST(request: NextRequest) {
     try {
@@ -57,11 +63,21 @@ export async function POST(request: NextRequest) {
         // receiving this verification success, using the Firestore client SDK.
         // This ensures Firestore security rules are properly applied.
 
+        // Fetch payment details to get the phone number entered in Razorpay checkout
+        let contactPhone = '';
+        try {
+            const payment = await razorpay.payments.fetch(razorpay_payment_id);
+            contactPhone = payment.contact as string;
+        } catch (fetchErr) {
+            console.error('Failed to fetch payment details for phone number:', fetchErr);
+        }
+
         return NextResponse.json(
             {
                 verified: true,
                 paymentId: razorpay_payment_id,
                 orderId: razorpay_order_id,
+                contactPhone,
             },
             { status: 200, headers: securityHeaders() }
         );
