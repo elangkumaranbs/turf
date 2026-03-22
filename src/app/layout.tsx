@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Footer } from "@/components/Footer";
+import { FCMHandler } from "@/components/FCMHandler";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -170,6 +171,7 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
+            <FCMHandler />
             {children}
             <Footer />
           </AuthProvider>
