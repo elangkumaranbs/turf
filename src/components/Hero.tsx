@@ -9,16 +9,28 @@ export const Hero = () => {
 
     return (
         <section className="relative min-h-[calc(100vh-80px)] sm:min-h-screen w-full flex items-center justify-center pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 overflow-hidden">
-            {/* Background Image with Overlay */}
+            {/* Background Container */}
             <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
-                <Image
-                    src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=2000&auto=format&fit=crop"
-                    alt="Stadium Background"
-                    fill
-                    className="object-cover opacity-100"
-                    priority
+                {/* Desktop Video */}
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="hidden md:block absolute inset-0 w-full h-full object-cover"
+                    src="/videos/hero-desktop.mp4"
                 />
-                <div className="absolute inset-0 bg-black/60" />
+            {/* Mobile Video */}
+            <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="block md:hidden absolute inset-0 w-full h-full object-cover z-0"
+                src="/videos/hero-mobile.mp4"
+            />
+            
+            <div className="absolute inset-0 bg-black/60 z-10" />
                 
                 {/* Glowing Orbs */}
                 <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--turf-green)]/10 rounded-full blur-[120px] mix-blend-screen animate-float" />
