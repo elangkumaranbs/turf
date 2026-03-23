@@ -32,7 +32,7 @@ export default function Home() {
                     <Icon className="w-8 h-8 text-[var(--turf-green)]" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[var(--turf-green)] transition-colors">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed text-base">{feature.desc}</p>
+                <p className="text-gray-400 leading-relaxed text-lg">{feature.desc}</p>
               </div>
             );
           })}
@@ -111,7 +111,7 @@ export default function Home() {
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" style={{ animationDelay: '1s' }} />
             
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 relative z-10">Own a Turf? <br className="sm:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Partner With Us.</span></h2>
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 relative z-10 leading-relaxed">
+            <p className="text-xl md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 relative z-10 leading-relaxed">
                 Join our network of premium turfs and reach thousands of active players. Manage bookings, analytics, and revenue all in one sleek dashboard.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
