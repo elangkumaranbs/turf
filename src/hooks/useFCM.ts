@@ -47,7 +47,7 @@ export const useFCM = () => {
                         console.log('No FCM registration token available. Request permission to generate one.');
                     }
                 } else {
-                    console.error('Notification permission completely denied.');
+                    console.warn('Notification permission denied by user. Push notifications will not be available.');
                 }
             } catch (error) {
                 console.error('An error occurred while retrieving token. ', error);
