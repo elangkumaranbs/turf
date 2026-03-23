@@ -1,13 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Inter } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Footer } from "@/components/Footer";
 import { FCMHandler } from "@/components/FCMHandler";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
 
 const SITE_URL = "https://turfgameden.com";
 
@@ -36,8 +46,6 @@ export const metadata: Metadata = {
     default: "TurfGameDen - Book Premium Cricket Turfs in Tamil Nadu",
     template: "%s | TurfGameDen",
   },
-  description:
-    "TurfGameDen is Tamil Nadu's #1 online turf booking platform. Book premium cricket turfs in Gobi, Sathy, Erode, Tiruppur & nearby cities. Instant slot booking, verified grounds, floodlit pitches. Home of TurfStar. Developed by Elangkumaran BS.",
   keywords: [
     // Brand
     "TurfGameDen", "Turf Game Den", "GameDen", "TurfStar", "Turf Star",
@@ -181,7 +189,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${outfit.variable} ${plusJakarta.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
             <FCMHandler />

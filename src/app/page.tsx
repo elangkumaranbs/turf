@@ -15,8 +15,8 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--turf-green)]/5 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
         
         <div className="relative z-10 animate-fade-up">
-            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Why Choose Turf<span className="text-[var(--turf-green)]">GameDen</span>?</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-20">We provide the best infrastructure, seamless booking, and a community-driven approach to turf games.</p>
+            <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 font-[family-name:var(--font-outfit)] tracking-tight">Why Choose Turf<span className="text-[var(--turf-green)]">GameDen</span>?</h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-20 font-[family-name:var(--font-jakarta)]">We provide the best infrastructure, seamless booking, and a community-driven approach to turf games.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
@@ -31,8 +31,8 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-2xl bg-[var(--turf-green)]/10 flex items-center justify-center mx-auto mb-8 group-hover:scale-110 group-hover:bg-[var(--turf-green)]/20 transition-all duration-300 shadow-lg shadow-[var(--turf-green)]/5">
                     <Icon className="w-8 h-8 text-[var(--turf-green)]" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[var(--turf-green)] transition-colors">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed text-lg">{feature.desc}</p>
+                <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-[var(--turf-green)] transition-colors font-[family-name:var(--font-outfit)]">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed text-lg font-[family-name:var(--font-jakarta)]">{feature.desc}</p>
               </div>
             );
           })}
@@ -45,10 +45,10 @@ export default function Home() {
         <div className="container mx-auto px-6 relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
                 <div className="flex-1 space-y-10 animate-fade-up">
-                    <div className="inline-block px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium text-sm shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                    <div className="inline-block px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold text-sm shadow-[0_0_15px_rgba(59,130,246,0.2)] font-[family-name:var(--font-outfit)] tracking-wide uppercase">
                         Seamless Process
                     </div>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">Book your game in <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">3 simple steps</span></h2>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-[family-name:var(--font-outfit)] tracking-tight">Book your game in <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">3 simple steps</span></h2>
                     
                     <div className="space-y-10">
                         {[
@@ -60,17 +60,17 @@ export default function Home() {
                             return (
                                 <div key={i} className="flex gap-6 items-start group">
                                     <div className="flex flex-col items-center">
-                                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} border ${item.border} flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform shadow-lg backdrop-blur-md`}>
+                                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} border ${item.border} flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform shadow-lg backdrop-blur-md font-[family-name:var(--font-outfit)]`}>
                                             {item.step}
                                         </div>
                                         {i !== 2 && <div className="w-px h-20 bg-gradient-to-b from-white/20 to-transparent my-3" />}
                                     </div>
                                     <div className="pt-2 flex-1">
-                                        <h4 className="text-2xl font-bold text-white mb-3 flex items-center gap-3">
+                                        <h4 className="text-2xl font-bold text-white mb-3 flex items-center gap-3 font-[family-name:var(--font-outfit)]">
                                             {item.title}
                                             <Icon className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
                                         </h4>
-                                        <p className="text-gray-400 text-lg leading-relaxed">{item.desc}</p>
+                                        <p className="text-gray-400 text-lg leading-relaxed font-[family-name:var(--font-jakarta)]">{item.desc}</p>
                                     </div>
                                 </div>
                             );
@@ -94,8 +94,8 @@ export default function Home() {
                                 <Users size={28} />
                             </div>
                             <div>
-                                <div className="text-3xl font-bold text-white">5k+</div>
-                                <div className="text-base text-gray-300 font-medium">Active Players</div>
+                                <div className="text-3xl font-bold text-white font-[family-name:var(--font-outfit)]">5k+</div>
+                                <div className="text-base text-gray-300 font-medium font-[family-name:var(--font-jakarta)]">Active Players</div>
                             </div>
                         </div>
                      </div>
@@ -110,15 +110,15 @@ export default function Home() {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--turf-green)]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" style={{ animationDelay: '1s' }} />
             
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 relative z-10">Own a Turf? <br className="sm:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Partner With Us.</span></h2>
-            <p className="text-xl md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 relative z-10 leading-relaxed">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 relative z-10 font-[family-name:var(--font-outfit)] tracking-tight">Own a Turf? <br className="sm:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Partner With Us.</span></h2>
+            <p className="text-xl md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 relative z-10 leading-relaxed font-[family-name:var(--font-jakarta)]">
                 Join our network of premium turfs and reach thousands of active players. Manage bookings, analytics, and revenue all in one sleek dashboard.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
-                <Link href="/services#partner" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black font-bold text-lg hover:shadow-[0_0_30px_rgba(46,204,113,0.4)] hover:scale-105 transition-all flex items-center justify-center gap-2">
+                <Link href="/services#partner" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black font-bold text-lg hover:shadow-[0_0_30px_rgba(46,204,113,0.4)] hover:scale-105 transition-all flex items-center justify-center gap-2 font-[family-name:var(--font-outfit)] tracking-wide">
                     Become a Partner <ArrowRight size={22} />
                 </Link>
-                <Link href="/turfs" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/5 text-white font-bold text-lg border border-white/10 hover:bg-white/10 hover:scale-105 transition-all">
+                <Link href="/turfs" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/5 text-white font-bold text-lg border border-white/10 hover:bg-white/10 hover:scale-105 transition-all font-[family-name:var(--font-outfit)] tracking-wide">
                     Explore Turfs
                 </Link>
             </div>

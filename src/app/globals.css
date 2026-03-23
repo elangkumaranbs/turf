@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-outfit);
 }
 
 :root {
@@ -48,6 +49,13 @@ body {
     background 0.3s ease,
     color 0.3s ease;
   scroll-behavior: smooth;
+  letter-spacing: -0.01em;
+}
+
+/* Premium Heading Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.02em;
 }
 
 /* Premium Glassmorphism Utilities */

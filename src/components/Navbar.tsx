@@ -42,9 +42,9 @@ export const Navbar = () => {
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 group">
                     <div className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16">
-                        <Image 
-                            src="/location type logo 001.png" 
-                            alt="TurfGameDen Logo" 
+                        <Image
+                            src="/location type logo 001.png"
+                            alt="TurfGameDen Logo"
                             width={64}
                             height={64}
                             className="w-full h-full object-contain transition-transform group-hover:scale-105"
@@ -57,7 +57,7 @@ export const Navbar = () => {
                 </Link>
 
                 {/* Desktop Menu */}
-                <div className="hidden lg:flex items-center space-x-1">
+                <div className="hidden lg:flex items-center space-x-1 -translate-x-8 xl:-translate-x-9">
                     <div className="flex bg-white/5 backdrop-blur-sm rounded-full p-1 border border-white/10">
                         {navLinks.map((link) => (
                             <Link

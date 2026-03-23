@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -17,6 +18,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const checkAndCreateUser = async (user: any) => {
         try {
@@ -37,8 +39,15 @@ export default function LoginPage() {
 
     const handleAuthError = (err: any) => {
         console.error(err);
-        if (err.code === 'permission-denied') {
+        const code = err.code;
+        if (code === 'permission-denied') {
             setError('Database permission denied. Please check your Firestore Security Rules.');
+        } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+            setError('Password is wrong. Please try again.');
+        } else if (code === 'auth/user-not-found') {
+            setError("Can't find your account. Please sign up.");
+        } else if (code === 'auth/too-many-requests') {
+            setError('Too many attempts. Please try again later.');
         } else {
             setError(err.message || 'Authentication failed');
         }
@@ -53,7 +62,18 @@ export default function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             router.push('/');
         } catch (err: any) {
-            setError(err.message || 'Failed to login');
+            const code = err.code;
+            if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+                setError('Password is wrong. Please try again.');
+            } else if (code === 'auth/user-not-found') {
+                setError("Can't find your account. Please sign up.");
+            } else if (code === 'auth/invalid-email') {
+                setError('Please enter a valid email address.');
+            } else if (code === 'auth/too-many-requests') {
+                setError('Too many attempts. Please try again later.');
+            } else {
+                setError(err.message || 'Failed to login');
+            }
         } finally {
             setLoading(false);
         }
@@ -99,14 +119,24 @@ export default function LoginPage() {
                             required
                         />
                         <div className="space-y-2">
-                            <Input
-                                label="Password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    label="Password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-[38px] text-gray-400 hover:text-white transition-colors p-1"
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                             <div className="flex justify-end">
                                 <Link href="/forgot-password" className="text-sm text-[var(--turf-green)] hover:underline font-medium">
                                     Forgot password?
