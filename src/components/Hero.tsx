@@ -8,7 +8,7 @@ export const Hero = () => {
     const router = useRouter();
 
     return (
-        <section className="relative min-h-[calc(100vh-80px)] sm:min-h-screen w-full flex items-center justify-center pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 overflow-hidden">
+        <section className="relative min-h-svh sm:min-h-screen w-full flex items-center justify-center pt-16 sm:pt-24 pb-0 sm:pb-16 px-4 overflow-hidden">
             {/* Background Container */}
             <div className="absolute inset-0 z-0 bg-[#0a0a0a]">
                 {/* Desktop Video */}
