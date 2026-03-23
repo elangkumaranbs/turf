@@ -1,0 +1,12 @@
+# TurfGameDen
+
+TurfGameDen is Tamil Nadu's premium online turf booking platform. It allows users to book cricket turfs in cities like Gobi, Sathy, Erode, and Tiruppur. 
+
+## Key Features
+- Instant turf slot booking
+- Verified cricket grounds with floodlights
+- Easy cancellations and refunds
+
+## Developer
+Developed by Elangkumaran BS.
+GitHub: https://github.com/elangkumaranbs
