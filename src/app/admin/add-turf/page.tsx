@@ -25,6 +25,7 @@ export default function AddTurfPage() {
         pricePerHour: '',
         description: '',
         wicketType: 'turf',
+        directionsLink: '',
     });
 
     const [amenities, setAmenities] = useState<string[]>([]);
@@ -66,6 +67,7 @@ export default function AddTurfPage() {
             if (!res.ok) throw new Error(data.error || 'Failed to fetch coordinates');
             setManualLat(data.lat);
             setManualLng(data.lng);
+            setFormData(prev => ({ ...prev, directionsLink: prev.directionsLink || mapsLink }));
             setMapsLink('');
             alert(`✓ Coordinates fetched: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`);
         } catch (err) {
@@ -114,6 +116,7 @@ export default function AddTurfPage() {
                     ? imageUrls
                     : ['https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=2000&auto=format&fit=crop'],
                 amenities,
+                directionsLink: formData.directionsLink.trim(),
                 ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
             }, user.uid);
 
@@ -159,6 +162,15 @@ export default function AddTurfPage() {
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                 required
                             />
+
+                            {/* Directions Link */}
+                            <div className="space-y-3">
+                                <label className="text-sm font-medium text-gray-300 ml-1">Google Maps Directions Link <span className="text-red-400 text-xs font-normal ml-1">*required</span></label>
+                                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2">
+                                    <p className="text-xs text-gray-400">Open Google Maps → find the court → tap <strong className="text-gray-300">Share → Copy Link</strong> → paste here. Used for "Get Directions" button.</p>
+                                    <Input type="url" placeholder="https://maps.app.goo.gl/..." value={formData.directionsLink} onChange={(e) => setFormData({ ...formData, directionsLink: e.target.value })} required />
+                                </div>
+                            </div>
 
                             {/* GPS Coordinates */}
                             <div className="space-y-3">

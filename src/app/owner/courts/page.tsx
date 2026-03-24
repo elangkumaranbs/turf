@@ -6,8 +6,9 @@ import { getTurfsByAdmin, deleteTurf, updateTurf, Turf, getLocations, Location }
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock } from 'lucide-react';
+import { MapPin, Trash2, Pencil, X, Check, Loader2, Plus, IndianRupee, Clock, Upload, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
+import { uploadImagesToCloudinary } from '@/lib/cloudinary';
 import Image from 'next/image';
 import { Select } from '@/components/ui/Select';
 import { formatTime12Hour } from '@/lib/utils';
@@ -23,6 +24,14 @@ export default function MyCourtsPage() {
     const [locations, setLocations] = useState<{label: string, value: string}[]>([]);
     const [editMapsLink, setEditMapsLink] = useState('');
     const [editMapsLoading, setEditMapsLoading] = useState(false);
+    const [editDirectionsLink, setEditDirectionsLink] = useState('');
+
+    const [editImages, setEditImages] = useState<File[]>([]);
+    const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
+    const [editNewImageUrl, setEditNewImageUrl] = useState('');
+    const [editImageMode, setEditImageMode] = useState<'upload' | 'url'>('upload');
+    const [editExistingImages, setEditExistingImages] = useState<string[]>([]);
+    const [editUploadProgress, setEditUploadProgress] = useState('');
 
     const fetchData = async () => {
         if (user) {
@@ -73,6 +82,21 @@ export default function MyCourtsPage() {
             lat: turf.lat,
             lng: turf.lng,
         });
+        setEditDirectionsLink(turf.directionsLink || '');
+        setEditExistingImages(turf.images || []);
+        setEditImages([]);
+        setEditImageUrls([]);
+        setEditNewImageUrl('');
+        setEditImageMode('upload');
+        setEditUploadProgress('');
+    };
+
+    const handleAddEditImageUrl = () => {
+        const url = editNewImageUrl.trim();
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            setEditImageUrls([...editImageUrls, url]);
+            setEditNewImageUrl('');
+        }
     };
 
     const fetchCoordsFromMapsLink = async () => {
@@ -83,6 +107,7 @@ export default function MyCourtsPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to fetch coordinates');
             setEditData(d => ({ ...d, lat: data.lat, lng: data.lng }));
+            setEditDirectionsLink(prev => prev.trim() ? prev : editMapsLink);
             setEditMapsLink('');
             alert(`✓ Coordinates fetched: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`);
         } catch (err) {
@@ -96,6 +121,15 @@ export default function MyCourtsPage() {
         if (!editingId) return;
         setActionLoading(editingId);
         try {
+            let uploadedUrls: string[] = [];
+            if (editImages.length > 0) {
+                uploadedUrls = await uploadImagesToCloudinary(editImages, ({ index, total, file }) => {
+                    setEditUploadProgress(`Uploading image ${index}/${total}: ${file}`);
+                });
+                setEditUploadProgress('All images uploaded!');
+            }
+            const allImages = [...editExistingImages, ...uploadedUrls, ...editImageUrls];
+
             // Re-geocode only if lat/lng not manually set and address/city changed
             let geoUpdate: { lat?: number; lng?: number } = {};
             if (editData.lat != null && editData.lng != null) {
@@ -107,13 +141,23 @@ export default function MyCourtsPage() {
 
             // Sanitize undefined values before updating
             const sanitized = Object.fromEntries(
-                Object.entries({ ...editData, ...geoUpdate }).filter(([, v]) => v !== undefined)
+                Object.entries({ ...editData, ...geoUpdate, directionsLink: editDirectionsLink }).filter(([, v]) => v !== undefined)
             ) as typeof editData;
+            
+            const finalUpdate = {
+                ...sanitized,
+                ...(allImages.length > 0 ? { images: allImages } : {})
+            };
 
-            await updateTurf(editingId, sanitized);
-            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...sanitized } : t));
+            await updateTurf(editingId, finalUpdate);
+            setTurfs(turfs.map(t => t.id === editingId ? { ...t, ...finalUpdate } : t));
             setEditingId(null);
             setEditData({});
+            setEditExistingImages([]);
+            setEditImages([]);
+            setEditImageUrls([]);
+            setEditNewImageUrl('');
+            setEditUploadProgress('');
         } catch (error) {
             alert('Failed to update court.');
         } finally {
@@ -124,6 +168,12 @@ export default function MyCourtsPage() {
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditData({});
+        setEditDirectionsLink('');
+        setEditExistingImages([]);
+        setEditImages([]);
+        setEditImageUrls([]);
+        setEditNewImageUrl('');
+        setEditUploadProgress('');
     };
 
     if (loading) {
@@ -238,6 +288,19 @@ export default function MyCourtsPage() {
                                             value={editData.contactEmail || ''}
                                             onChange={(e) => setEditData({ ...editData, contactEmail: e.target.value })}
                                         />
+                                        {/* Directions Link */}
+                                        <div className="md:col-span-2 space-y-2">
+                                            <label className="text-sm font-medium text-gray-300 block">Google Maps Directions Link <span className="text-red-400 text-xs font-normal ml-1">*required</span></label>
+                                            <p className="text-xs text-gray-400">Open Google Maps → find the court → tap <strong className="text-gray-300">Share → Copy Link</strong> → paste here. Used for "Get Directions" button.</p>
+                                            <input
+                                                type="url"
+                                                placeholder="https://maps.app.goo.gl/..."
+                                                value={editDirectionsLink}
+                                                onChange={(e) => setEditDirectionsLink(e.target.value)}
+                                                className="w-full h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-[var(--turf-green)]/50 focus:ring-2 focus:ring-[var(--turf-green)]/10 focus:outline-none transition-all"
+                                                required
+                                            />
+                                        </div>
                                         {/* GPS Coordinates Section */}
                                         <div className="md:col-span-2 rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
                                             <label className="text-sm font-medium text-gray-300 block">GPS Coordinates <span className="text-gray-500 font-normal text-xs">(optional)</span></label>
@@ -297,6 +360,71 @@ export default function MyCourtsPage() {
                                             value={editData.description || ''}
                                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
                                         />
+                                    </div>
+                                    {/* Images */}
+                                    <div className="space-y-3 pt-3">
+                                        <label className="text-sm font-medium text-gray-300 ml-1">Images</label>
+                                        {editExistingImages.length > 0 && (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                                {editExistingImages.map((img, idx) => (
+                                                    <div key={idx} className="relative group/img rounded-lg overflow-hidden border border-white/10 aspect-video">
+                                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                                        <button type="button" onClick={() => setEditExistingImages(editExistingImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white">
+                                                            <X size={10} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {/* Upload/URL toggle */}
+                                        <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 max-w-xs">
+                                            <button type="button" onClick={() => setEditImageMode('upload')} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${editImageMode === 'upload' ? 'bg-[var(--turf-green)] text-white shadow' : 'text-gray-400 hover:text-white'}`}>
+                                                <Upload size={14} /> Upload Files
+                                            </button>
+                                            <button type="button" onClick={() => setEditImageMode('url')} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${editImageMode === 'url' ? 'bg-[var(--turf-green)] text-white shadow' : 'text-gray-400 hover:text-white'}`}>
+                                                <LinkIcon size={14} /> Paste URL
+                                            </button>
+                                        </div>
+                                        {editImageMode === 'upload' ? (
+                                            <div className="border border-dashed border-white/20 rounded-xl p-6 text-center cursor-pointer hover:border-[var(--turf-green)] transition-colors relative group">
+                                                <input type="file" multiple accept="image/*" onChange={(e) => { if (e.target.files) setEditImages(prev => [...prev, ...Array.from(e.target.files!)]); }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-[var(--turf-green)] transition-colors">
+                                                    <Upload className="w-8 h-8" />
+                                                    <span className="text-sm">{editImages.length > 0 ? `${editImages.length} new file${editImages.length > 1 ? 's' : ''} selected` : 'Click or drag to upload images'}</span>
+                                                    <span className="text-xs text-gray-600">PNG, JPG up to 10MB each</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <Input value={editNewImageUrl} onChange={(e) => setEditNewImageUrl(e.target.value)} placeholder="https://example.com/photo.jpg" className="flex-1" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEditImageUrl(); } }} />
+                                                <Button type="button" onClick={handleAddEditImageUrl} variant="secondary" className="shrink-0 gap-1"><Plus size={16} /> Add</Button>
+                                            </div>
+                                        )}
+                                        {/* New image previews */}
+                                        {(editImages.length > 0 || editImageUrls.length > 0) && (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                                                {editImages.map((file, idx) => (
+                                                    <div key={`file-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-emerald-500/30 bg-white/5 aspect-video">
+                                                        <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                                                        <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[10px] text-emerald-400 text-center py-0.5">NEW</span>
+                                                        <button type="button" onClick={() => setEditImages(editImages.filter((_, i) => i !== idx))} className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"><X size={10} /></button>
+                                                    </div>
+                                                ))}
+                                                {editImageUrls.map((url, idx) => (
+                                                    <div key={`url-${idx}`} className="relative group/img rounded-lg overflow-hidden border border-emerald-500/30 bg-white/5 aspect-video">
+                                                        <img src={url} alt="" className="w-full h-full object-cover" />
+                                                        <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[10px] text-emerald-400 text-center py-0.5">NEW</span>
+                                                        <button type="button" onClick={() => setEditImageUrls(editImageUrls.filter((_, i) => i !== idx))} className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-red-400 opacity-0 group-hover/img:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"><X size={10} /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {editUploadProgress && (
+                                            <div className="flex items-center gap-2 text-xs text-[var(--turf-green)] bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/20 rounded-lg px-3 py-2">
+                                                <Loader2 size={14} className="animate-spin shrink-0" />
+                                                {editUploadProgress}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex flex-wrap gap-4 pt-4 border-t border-white/10">
                                         <button 

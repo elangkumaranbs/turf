@@ -43,8 +43,8 @@ service cloud.firestore {
     // USERS Collection
     // ──────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Anyone can read their own user document
-      allow read: if isOwner(userId) || isSuperAdmin();
+      // Users can read their own doc; admins can read any user (for customer name lookups)
+      allow read: if isOwner(userId) || isAdminOrSuper();
       
       // Super admin can read all users
       allow list: if isSuperAdmin();
@@ -79,6 +79,10 @@ service cloud.firestore {
       
       // Owner can update their own turfs
       allow update: if isOwner(resource.data.adminId) || isSuperAdmin();
+      
+      // Allow any user to update ONLY the rating fields when submitting a review
+      allow update: if isAuthenticated() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'reviewCount']);
       
       // Owner or super admin can delete
       allow delete: if isOwner(resource.data.adminId) || isSuperAdmin();
@@ -148,6 +152,24 @@ service cloud.firestore {
       
       // No updates needed — pending orders are created and deleted only
       allow update: if false;
+    }
+    
+    // ──────────────────────────────────────────────────────────────
+    // REVIEWS Collection
+    // ──────────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      // Everyone can read and list reviews
+      allow read, list: if true;
+      
+      // Authenticated users can create reviews
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+                       
+      // Users can update their own reviews
+      allow update: if isOwner(resource.data.userId);
+      
+      // Users can delete their own reviews, or super admin can delete any
+      allow delete: if isOwner(resource.data.userId) || isSuperAdmin();
     }
     
     // ──────────────────────────────────────────────────────────────

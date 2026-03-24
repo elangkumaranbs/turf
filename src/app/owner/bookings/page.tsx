@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getBookingsByOwner, getTurfsByAdmin, Booking, Turf } from '@/lib/firebase/firestore';
+import { getBookingsByOwner, getTurfsByAdmin, getUserById, Booking, Turf } from '@/lib/firebase/firestore';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Loader2, CalendarDays, Clock, MapPin, Search, Filter, WifiOff } from 'lucide-react';
+import { Loader2, CalendarDays, Clock, MapPin, Search, Filter, WifiOff, User } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function OwnerBookingsPage() {
@@ -14,6 +14,7 @@ export default function OwnerBookingsPage() {
     const [loading, setLoading] = useState(true);
     const [filterTurf, setFilterTurf] = useState('all');
     const [filterDate, setFilterDate] = useState('');
+    const [userNames, setUserNames] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -25,6 +26,25 @@ export default function OwnerBookingsPage() {
                 ]);
                 setBookings(bookingsData);
                 setTurfs(turfsData);
+
+                // Resolve customer names
+                const uniqueUserIds = [...new Set(bookingsData.map(b => b.userId))];
+                const nameMap: Record<string, string> = {};
+                await Promise.all(
+                    uniqueUserIds.map(async (uid) => {
+                        try {
+                            const userData = await getUserById(uid);
+                            if (userData) {
+                                nameMap[uid] = userData.name || userData.displayName || userData.email || uid.slice(0, 8);
+                            } else {
+                                nameMap[uid] = uid.slice(0, 8);
+                            }
+                        } catch {
+                            nameMap[uid] = uid.slice(0, 8);
+                        }
+                    })
+                );
+                setUserNames(nameMap);
                 setLoading(false);
             }
         };
@@ -173,11 +193,13 @@ export default function OwnerBookingsPage() {
                                     </div>
                                 </div>
                                 <div className="mt-2 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-gray-500 font-medium">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center text-[10px] text-gray-400 border border-white/10">
-                                            {booking.userId.slice(0, 1).toUpperCase()}
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold text-blue-400">
+                                            {(booking.customerName || userNames[booking.userId] || '?').slice(0, 1).toUpperCase()}
                                         </div>
-                                        ID: {booking.userId.slice(0, 8)}...
+                                        <span className="text-gray-300 font-semibold text-sm truncate max-w-[200px]">
+                                            {booking.customerName || userNames[booking.userId] || 'Loading...'}
+                                        </span>
                                     </div>
                                     <div className="bg-white/5 px-2 py-1 rounded">
                                         {format(new Date(booking.createdAt), 'MMM d • h:mm a')}

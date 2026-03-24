@@ -42,6 +42,7 @@ export default function AddCourtPage() {
         contactEmail: '',
         openTime: '06:00',
         closeTime: '22:00',
+        directionsLink: '',
     });
 
     const [amenities, setAmenities] = useState<string[]>([]);
@@ -95,6 +96,7 @@ export default function AddCourtPage() {
             if (!res.ok) throw new Error(data.error || 'Failed to fetch coordinates');
             setManualLat(data.lat);
             setManualLng(data.lng);
+            setFormData(prev => ({ ...prev, directionsLink: prev.directionsLink || mapsLink }));
             setMapsLink('');
             alert(`✓ Coordinates fetched: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`);
         } catch (err) {
@@ -151,6 +153,7 @@ export default function AddCourtPage() {
                     open: formData.openTime,
                     close: formData.closeTime,
                 },
+                directionsLink: formData.directionsLink.trim(),
                 status: 'active',
                 ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
             }, user.uid);
@@ -306,6 +309,21 @@ export default function AddCourtPage() {
                                 value={formData.contactEmail}
                                 onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                             />
+                        </div>
+                    </div>
+
+                    {/* Directions Link */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2 flex items-center gap-2">
+                            <span className="bg-blue-500/10 text-blue-400 p-1.5 rounded-lg"><LinkIcon size={16} /></span>
+                            Google Maps Directions <span className="text-red-400 text-sm font-normal ml-1">*required</span>
+                        </h3>
+                        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2">
+                            <p className="text-xs text-gray-400">Open Google Maps → find the court → tap <strong className="text-gray-300">Share → Copy Link</strong> → paste here. Used for "Get Directions" button and distance calculations.</p>
+                            <Input type="url" placeholder="https://maps.app.goo.gl/..." value={formData.directionsLink} onChange={(e) => setFormData({ ...formData, directionsLink: e.target.value })} required />
+                            {formData.directionsLink.trim() && (
+                                <p className="text-xs text-blue-400 flex items-center gap-1"><LinkIcon size={11} /> Directions link set ✓</p>
+                            )}
                         </div>
                     </div>
 

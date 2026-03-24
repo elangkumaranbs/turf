@@ -5,11 +5,13 @@ import { useParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { getTurfById, getUserById, Turf } from '@/lib/firebase/firestore';
-import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images } from 'lucide-react';
+import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images, Navigation2, Star } from 'lucide-react';
 import Image from 'next/image';
+import { haversineDistance, formatDistance } from '@/lib/geocoding';
 import { createBooking, createPendingOrder, deletePendingOrder } from '@/lib/firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { SlotPicker } from '@/components/SlotPicker';
+import { ReviewsSection } from '@/components/ReviewsSection';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createRazorpayOrder, initiatePayment, verifyPayment } from '@/lib/razorpay';
 import type { RazorpaySuccessResponse } from '@/lib/razorpay';
@@ -24,6 +26,7 @@ export default function TurfDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
     const initialDate = searchParams.get('date');
     const initialTime = searchParams.get('time');
@@ -37,6 +40,14 @@ export default function TurfDetailsPage() {
             setLoading(false);
         };
         fetchTurf();
+
+        // Try to get user location for distance calculation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => {} // Ignore errors silently on details page
+            );
+        }
     }, [params.id]);
 
     // Keyboard navigation for lightbox
@@ -224,6 +235,12 @@ export default function TurfDetailsPage() {
     const prevImage = () => setSelectedImage(i => (i - 1 + images.length) % images.length);
     const nextImage = () => setSelectedImage(i => (i + 1) % images.length);
 
+    let distanceStr: string | null = null;
+    if (userLocation && turf.lat != null && turf.lng != null) {
+        const dist = haversineDistance(userLocation.lat, userLocation.lng, turf.lat, turf.lng);
+        distanceStr = formatDistance(dist);
+    }
+
     return (
         <main className="min-h-screen bg-[var(--background)] relative overflow-hidden">
             {/* Background blobs */}
@@ -316,13 +333,36 @@ export default function TurfDetailsPage() {
                                 <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-gray-300 uppercase tracking-wider backdrop-blur-md">
                                     {turf.wicketType} Wicket
                                 </span>
+                                {turf.averageRating && turf.averageRating > 0 && (
+                                    <span className="bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-full text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(234,179,8,0.15)]">
+                                        <Star size={14} fill="currentColor" />
+                                        {turf.averageRating.toFixed(1)} ({turf.reviewCount} {turf.reviewCount === 1 ? 'Review' : 'Reviews'})
+                                    </span>
+                                )}
                             </div>
                             <h1 className="text-4xl sm:text-5xl font-black text-white mb-3 tracking-tight leading-tight">
                                 {turf.name}
                             </h1>
-                            <div className="flex items-center text-gray-400 text-base sm:text-lg font-medium">
-                                <MapPin className="w-5 h-5 mr-2 text-[var(--turf-green)]" />
-                                {[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}
+                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                                <div className="flex items-center text-gray-400 text-base sm:text-lg font-medium">
+                                    <MapPin className="w-5 h-5 mr-2 text-[var(--turf-green)]" />
+                                    {[turf.address, turf.city].filter(Boolean).join(', ') || turf.location || 'Location not specified'}
+                                </div>
+                                {turf.directionsLink && (
+                                    <a
+                                        href={turf.directionsLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 transition-all"
+                                    >
+                                        <Navigation2 size={14} /> Direction
+                                    </a>
+                                )}
+                                {distanceStr && (
+                                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/30 text-[var(--turf-green)] shadow-[0_0_15px_rgba(46,204,113,0.15)]">
+                                        <Navigation2 size={14} className="fill-current" /> {distanceStr} away
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -375,6 +415,9 @@ export default function TurfDetailsPage() {
                         </GlassCard>
                     </div>
                 </div>
+
+                {/* ── Native Reviews ── */}
+                <ReviewsSection turfId={turf.id} />
             </div>
 
             {/* ── Fullscreen Lightbox ── */}

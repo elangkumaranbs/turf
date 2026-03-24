@@ -20,6 +20,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                         error && "border-red-500 focus:border-red-500 focus:ring-red-500",
                         className
                     )}
+                    onWheel={(e) => { if (props.type === 'number') (e.target as HTMLInputElement).blur(); }}
                     {...props}
                 />
                 {error && <p className="text-sm text-red-500 ml-1">{error}</p>}

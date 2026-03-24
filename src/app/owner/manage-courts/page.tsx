@@ -42,6 +42,7 @@ export default function AdminCourtsPage() {
         adminId: '',
         lat: '' as string,
         lng: '' as string,
+        directionsLink: '',
     });
 
     // Create form extra state
@@ -56,6 +57,7 @@ export default function AdminCourtsPage() {
     const [geocodeProgress, setGeocodeProgress] = useState('');
     const [editMapsLink, setEditMapsLink] = useState('');
     const [editMapsLoading, setEditMapsLoading] = useState(false);
+    const [editDirectionsLink, setEditDirectionsLink] = useState('');
     const [createMapsLink, setCreateMapsLink] = useState('');
     const [createMapsLoading, setCreateMapsLoading] = useState(false);
 
@@ -149,7 +151,7 @@ export default function AdminCourtsPage() {
         setCreateFormData({
             name: '', address: '', city: '', pricePerHour: '', description: '',
             wicketType: 'turf', courts: '1', contactPhone: '', contactEmail: '',
-            openTime: '06:00', closeTime: '22:00', adminId: '', lat: '', lng: '',
+            openTime: '06:00', closeTime: '22:00', adminId: '', lat: '', lng: '', directionsLink: '',
         });
         setCreateAmenities([]);
         setCreateNewAmenity('');
@@ -205,6 +207,7 @@ export default function AdminCourtsPage() {
             status: turf.status || 'active',
             lat: turf.lat,
             lng: turf.lng,
+            directionsLink: turf.directionsLink || '',
         });
         setEditExistingImages(turf.images || []);
         setEditImages([]);
@@ -214,10 +217,15 @@ export default function AdminCourtsPage() {
         setEditAmenities(turf.amenities || []);
         setEditNewAmenity('');
         setEditUploadProgress('');
+        setEditDirectionsLink(turf.directionsLink || '');
     };
 
     const handleSaveEdit = async () => {
         if (!editingId) return;
+        if (!editDirectionsLink.trim()) {
+            alert('Google Maps directions link is required. Please add the link before saving.');
+            return;
+        }
         setActionLoading(editingId);
         try {
             let uploadedUrls: string[] = [];
@@ -234,6 +242,7 @@ export default function AdminCourtsPage() {
             const updateData = {
                 ...sanitized,
                 amenities: editAmenities,
+                directionsLink: editDirectionsLink.trim(),
                 ...(allImages.length > 0 ? { images: allImages } : {}),
             };
             await updateTurf(editingId, updateData);
@@ -241,6 +250,7 @@ export default function AdminCourtsPage() {
             setEditingId(null);
             setEditData({});
             setEditMapsLink('');
+            setEditDirectionsLink('');
             setEditExistingImages([]);
             setEditImages([]);
             setEditImageUrls([]);
@@ -260,6 +270,7 @@ export default function AdminCourtsPage() {
         setEditingId(null);
         setEditData({});
         setEditMapsLink('');
+        setEditDirectionsLink('');
         setEditExistingImages([]);
         setEditImages([]);
         setEditImageUrls([]);
@@ -288,6 +299,10 @@ export default function AdminCourtsPage() {
         e.preventDefault();
         if (!createFormData.adminId) {
             alert('Please select a turf admin');
+            return;
+        }
+        if (!createFormData.directionsLink.trim()) {
+            alert('Please provide a Google Maps directions link. Open Google Maps, find the court, tap Share → Copy Link, and paste it here.');
             return;
         }
         setActionLoading('create');
@@ -327,6 +342,7 @@ export default function AdminCourtsPage() {
                 },
                 status: 'active',
                 ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+                directionsLink: createFormData.directionsLink.trim(),
             }, createFormData.adminId);
             await fetchTurfs();
             resetCreateForm();
@@ -517,6 +533,25 @@ export default function AdminCourtsPage() {
                                                 <Input label="Contact Phone" type="tel" value={editData.contactPhone || ''} onChange={(e) => setEditData({ ...editData, contactPhone: e.target.value })} />
                                                 <Input label="Contact Email" type="email" value={editData.contactEmail || ''} onChange={(e) => setEditData({ ...editData, contactEmail: e.target.value })} />
                                             </div>
+                                            {/* Directions Link */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium text-gray-300 ml-1 flex items-center gap-1.5">
+                                                    <LinkIcon size={14} className="text-blue-400" />
+                                                    Google Maps Directions Link <span className="text-red-400 text-xs font-normal ml-1">*required</span>
+                                                </label>
+                                                <input
+                                                    type="url"
+                                                    placeholder="https://maps.app.goo.gl/..."
+                                                    value={editDirectionsLink}
+                                                    onChange={(e) => setEditDirectionsLink(e.target.value)}
+                                                    className="flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-gray-500 focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 focus:outline-none transition-all"
+                                                    required
+                                                />
+                                                {editDirectionsLink.trim() && (
+                                                    <p className="text-xs text-blue-400 ml-1 flex items-center gap-1"><LinkIcon size={11} /> Directions link set ✓</p>
+                                                )}
+                                                <p className="text-xs text-gray-500 ml-1">Open Google Maps → find the court → tap <strong className="text-gray-400">Share → Copy Link</strong> → paste here. Used for "Get Directions" button and distance calculations.</p>
+                                            </div>
                                             {/* Amenities */}
                                             <div className="space-y-3">
                                                 <label className="text-sm font-medium text-gray-300 ml-1">Amenities</label>
@@ -541,7 +576,7 @@ export default function AdminCourtsPage() {
                                                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
                                                     <div className="flex gap-2 items-center">
                                                         <input type="text" placeholder="Paste Google Maps link..." value={editMapsLink} onChange={(e) => setEditMapsLink(e.target.value)} className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all" />
-                                                        <button type="button" onClick={() => fetchCoordsFromMapsLink(editMapsLink, (lat, lng) => { setEditData({ ...editData, lat, lng }); setEditMapsLink(''); alert(`✓ Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`); }, setEditMapsLoading)} disabled={!editMapsLink.trim() || editMapsLoading} className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                                                        <button type="button" onClick={() => fetchCoordsFromMapsLink(editMapsLink, (lat, lng) => { setEditData({ ...editData, lat, lng }); setEditDirectionsLink(editMapsLink); setEditMapsLink(''); alert(`✓ Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`); }, setEditMapsLoading)} disabled={!editMapsLink.trim() || editMapsLoading} className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
                                                             {editMapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />} Fetch
                                                         </button>
                                                     </div>
@@ -736,6 +771,20 @@ export default function AdminCourtsPage() {
                                         <Input label="Email" type="email" placeholder="owner@example.com" value={createFormData.contactEmail} onChange={(e) => setCreateFormData({ ...createFormData, contactEmail: e.target.value })} />
                                     </div>
                                 </div>
+                                {/* Directions Link */}
+                                <div className="space-y-3">
+                                    <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2 flex items-center gap-2">
+                                        <span className="bg-blue-500/10 text-blue-400 p-1.5 rounded-lg"><LinkIcon size={16} /></span>
+                                        Google Maps Directions <span className="text-red-400 text-sm font-normal ml-1">*required</span>
+                                    </h3>
+                                    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2">
+                                        <p className="text-xs text-gray-400">Open Google Maps → find the court → tap <strong className="text-gray-300">Share → Copy Link</strong> → paste here. Used for "Get Directions" button and distance calculations.</p>
+                                        <Input type="url" placeholder="https://maps.app.goo.gl/..." value={createFormData.directionsLink} onChange={(e) => setCreateFormData({ ...createFormData, directionsLink: e.target.value })} required />
+                                        {createFormData.directionsLink.trim() && (
+                                            <p className="text-xs text-blue-400 flex items-center gap-1"><LinkIcon size={11} /> Directions link set ✓</p>
+                                        )}
+                                    </div>
+                                </div>
                                 {/* GPS */}
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-semibold text-white border-b border-white/10 pb-2">GPS Coordinates</h3>
@@ -743,7 +792,7 @@ export default function AdminCourtsPage() {
                                         <p className="text-xs text-gray-400">Add GPS coordinates for accurate distance calculations. Optional — will auto-geocode from address if blank.</p>
                                         <div className="flex gap-2 items-center">
                                             <input type="text" placeholder="Paste Google Maps link..." value={createMapsLink} onChange={(e) => setCreateMapsLink(e.target.value)} className="flex-1 h-10 px-3 rounded-xl border border-white/10 bg-white/5 text-white text-sm placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/10 focus:outline-none transition-all" />
-                                            <button type="button" onClick={() => fetchCoordsFromMapsLink(createMapsLink, (lat, lng) => { setCreateFormData({ ...createFormData, lat: String(lat), lng: String(lng) }); setCreateMapsLink(''); alert(`✓ Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`); }, setCreateMapsLoading)} disabled={!createMapsLink.trim() || createMapsLoading} className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                                            <button type="button" onClick={() => fetchCoordsFromMapsLink(createMapsLink, (lat, lng) => { setCreateFormData({ ...createFormData, lat: String(lat), lng: String(lng), directionsLink: createMapsLink }); setCreateMapsLink(''); alert(`✓ Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`); }, setCreateMapsLoading)} disabled={!createMapsLink.trim() || createMapsLoading} className="h-10 px-4 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
                                                 {createMapsLoading ? <Loader2 size={14} className="animate-spin" /> : <MapPin size={14} />} Fetch
                                             </button>
                                         </div>

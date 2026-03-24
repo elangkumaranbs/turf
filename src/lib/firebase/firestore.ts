@@ -29,6 +29,9 @@ export interface Turf {
     createdAt?: string;
     lat?: number;              // Latitude (auto-geocoded from address)
     lng?: number;              // Longitude (auto-geocoded from address)
+    directionsLink: string;    // Google Maps directions URL (required)
+    averageRating?: number;
+    reviewCount?: number;
 }
 
 // ─── Booking Interface ─────────────────────────────────────────────
@@ -43,6 +46,7 @@ export interface Booking {
     createdAt: string;
     status: 'confirmed' | 'cancelled' | 'pending';
     bookingType?: 'online' | 'offline'; // 'offline' = manually blocked by owner
+    paymentMode?: 'cash' | 'online'; // For offline bookings: cash walk-in vs online payment
     customerName?: string; // Optional: for offline blocks, custom label
     // Payment fields (Razorpay)
     paymentId?: string;        // Razorpay payment ID
@@ -325,11 +329,17 @@ export const createOfflineBlock = async (
     adminId: string,
     date: string,
     times: string[],
-    customerName?: string
+    customerName?: string,
+    paymentData?: {
+        paymentMode: 'cash' | 'online';
+        paymentId?: string;
+        orderId?: string;
+        amountPaid?: number;
+    }
 ): Promise<string> => {
     try {
         const bookingsCol = collection(db, 'bookings');
-        const newBooking = {
+        const newBooking: any = {
             userId: adminId,
             turfId,
             date,
@@ -338,7 +348,11 @@ export const createOfflineBlock = async (
             createdAt: new Date().toISOString(),
             status: 'confirmed',
             bookingType: 'offline',
-            ...(customerName ? { customerName } : {})
+            paymentMode: paymentData?.paymentMode || 'cash',
+            ...(customerName ? { customerName } : {}),
+            ...(paymentData?.paymentId ? { paymentId: paymentData.paymentId } : {}),
+            ...(paymentData?.orderId ? { orderId: paymentData.orderId } : {}),
+            ...(paymentData?.amountPaid != null ? { amountPaid: paymentData.amountPaid } : {}),
         };
         const docRef = await addDoc(bookingsCol, newBooking);
         return docRef.id;
