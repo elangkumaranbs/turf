@@ -151,7 +151,7 @@ export default function BlockSlotsPage() {
                 turfName: selectedTurf.name,
                 userName: customerName.trim() || user.displayName || '',
                 userEmail: user.email || '',
-                userPhone: user.phone || '',
+                userPhone: '', // Don't prefill owner's phone — this is a customer booking
                 onSuccess: async (response: RazorpaySuccessResponse) => {
                     try {
                         // Step 3: Verify payment

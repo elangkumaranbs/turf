@@ -38,6 +38,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     const userDocRef = doc(db, 'users', firebaseUser.uid);
                     const userDoc = await getDoc(userDocRef);
+
+                    // Guard: If Firestore doc was deleted by admin, sign out the ghost user
+                    if (!userDoc.exists() && firebaseUser.email !== SUPER_ADMIN_EMAIL) {
+                        console.warn('User Firestore doc not found — account was deleted. Signing out.');
+                        await auth.signOut();
+                        setUser(null);
+                        setLoading(false);
+                        return;
+                    }
+
                     const userData = userDoc.data();
                     let role = userData?.role || 'user';
 

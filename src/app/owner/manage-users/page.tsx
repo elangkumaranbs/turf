@@ -5,7 +5,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { getAllUsers, updateUserRole, createUserDocument, deleteUserDocument, updateUserProfile } from '@/lib/firebase/firestore';
+import { getAllUsers, updateUserRole, createUserDocument, updateUserProfile } from '@/lib/firebase/firestore';
 import { Loader2, Shield, ShieldCheck, ShieldX, Users, Search, CheckCircle, XCircle, Clock, UserPlus, Pencil, Trash2, X } from 'lucide-react';
 import { useAuth, SUPER_ADMIN_EMAIL } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -118,12 +118,20 @@ export default function ManageUsersPage() {
     };
 
     const handleDeleteUser = async (userId: string, userName: string) => {
-        if (!confirm(`⚠️ Are you sure you want to delete ${userName}?\n\nThis will permanently delete:\n• User account\n• All their bookings\n• All their turfs (if owner)\n\nThis action cannot be undone!`)) return;
+        if (!confirm(`⚠️ Are you sure you want to delete ${userName}?\n\nThis will permanently delete:\n• Firebase Auth account (they cannot log in again)\n• User profile & data\n• All their bookings\n• All their turfs (if owner)\n\nThis action cannot be undone!`)) return;
         setActionLoading(userId);
         try {
-            await deleteUserDocument(userId);
+            const response = await fetch('/api/admin/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, adminUid: user?.uid }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to delete user');
+            }
             setUsers(users.filter(u => u.uid !== userId));
-            alert('✅ User and all associated data deleted successfully!');
+            alert('✅ User fully deleted (Auth account + all data)!');
         } catch (error: any) {
             console.error('Error deleting user:', error);
             alert(`Failed to delete user: ${error.message}`);

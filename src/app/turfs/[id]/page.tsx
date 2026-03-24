@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { getTurfById, getUserById, Turf } from '@/lib/firebase/firestore';
-import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images, Navigation2, Star } from 'lucide-react';
+import { getTurfById, getUserById, updateUserProfile, Turf } from '@/lib/firebase/firestore';
+import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images, Navigation2, Star, Phone, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import cloudinaryLoader from '@/lib/cloudinaryLoader';
 import { haversineDistance, formatDistance } from '@/lib/geocoding';
@@ -28,6 +28,12 @@ export default function TurfDetailsPage() {
     const [selectedImage, setSelectedImage] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+    // Phone number modal state
+    const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [phoneInput, setPhoneInput] = useState('');
+    const [phoneSaving, setPhoneSaving] = useState(false);
+    const [pendingBookingData, setPendingBookingData] = useState<{ date: string; times: string[] } | null>(null);
 
     const initialDate = searchParams.get('date');
     const initialTime = searchParams.get('time');
@@ -70,7 +76,28 @@ export default function TurfDetailsPage() {
         return () => { document.body.style.overflow = ''; };
     }, [lightboxOpen]);
 
+    // ─── Booking Flow ─────────────────────────────────────────────────
     const handleBooking = async (date: string, times: string[]) => {
+        if (!turf || !user) return;
+
+        // Fetch the customer's latest profile to check for phone number
+        const customerProfile = await getUserById(user.uid);
+        const customerPhone = customerProfile?.phone || '';
+
+        if (!customerPhone) {
+            // No phone on profile — show modal to collect it before payment
+            setPendingBookingData({ date, times });
+            setPhoneInput('');
+            setShowPhoneModal(true);
+            return;
+        }
+
+        // Phone exists — proceed directly to payment
+        await proceedWithPayment(date, times, customerPhone);
+    };
+
+    // Called after phone is confirmed (either from profile or from modal)
+    const proceedWithPayment = async (date: string, times: string[], customerPhone: string) => {
         if (!turf || !user) return;
 
         const totalAmount = times.length * turf.pricePerHour;
@@ -103,7 +130,7 @@ export default function TurfDetailsPage() {
                 turfName: turf.name,
                 userName: user.displayName || '',
                 userEmail: user.email || '',
-                userPhone: user.phone || '',
+                userPhone: customerPhone,
                 onSuccess: async (response) => {
                     try {
                         // Step 4: Verify payment signature on server
@@ -133,6 +160,15 @@ export default function TurfDetailsPage() {
                                 bookingType: 'online',
                             });
 
+                            // Step 5b: Save the phone number from Razorpay checkout to the customer's Firebase profile
+                            if (verification.contactPhone) {
+                                try {
+                                    await updateUserProfile(user.uid, { phone: verification.contactPhone });
+                                } catch (phoneUpdateErr) {
+                                    console.error('Failed to update customer phone (non-blocking):', phoneUpdateErr);
+                                }
+                            }
+
                             // Step 6: Remove slot lock
                             await deletePendingOrder(orderData.orderId);
 
@@ -149,7 +185,7 @@ export default function TurfDetailsPage() {
                                     amountPaid: totalAmount,
                                     customerName: user.displayName || 'Customer',
                                     customerEmail: user.email || '',
-                                    customerPhone: verification.contactPhone || user.phone || '',
+                                    customerPhone: verification.contactPhone || customerPhone,
                                     ownerName: ownerData?.name || 'Turf Owner',
                                     ownerEmail,
                                 });
@@ -212,6 +248,35 @@ export default function TurfDetailsPage() {
             } else {
                 alert(`Failed to initiate payment: ${error.message}`);
             }
+        }
+    };
+
+    // ─── Phone Modal Submit ─────────────────────────────────────────
+    const handlePhoneSubmit = async () => {
+        if (!user || !pendingBookingData) return;
+
+        const trimmed = phoneInput.trim();
+        // Basic Indian phone validation: 10 digits, optionally prefixed with +91
+        const phoneRegex = /^(\+91[\-\s]?)?[6-9]\d{9}$/;
+        if (!phoneRegex.test(trimmed.replace(/\s/g, ''))) {
+            alert('Please enter a valid 10-digit Indian mobile number.');
+            return;
+        }
+
+        setPhoneSaving(true);
+        try {
+            // Save phone to Firebase profile
+            await updateUserProfile(user.uid, { phone: trimmed });
+
+            // Close modal and proceed to payment
+            setShowPhoneModal(false);
+            await proceedWithPayment(pendingBookingData.date, pendingBookingData.times, trimmed);
+        } catch (err) {
+            console.error('Error saving phone number:', err);
+            alert('Failed to save phone number. Please try again.');
+        } finally {
+            setPhoneSaving(false);
+            setPendingBookingData(null);
         }
     };
 
@@ -421,6 +486,65 @@ export default function TurfDetailsPage() {
                 {/* ── Native Reviews ── */}
                 <ReviewsSection turfId={turf.id} />
             </div>
+
+            {/* ── Phone Number Modal ── */}
+            {showPhoneModal && (
+                <div
+                    className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
+                    onClick={() => { setShowPhoneModal(false); setPendingBookingData(null); }}
+                >
+                    <div
+                        className="w-full max-w-md bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl animate-fade-up"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 rounded-xl bg-[var(--turf-green)]/10 border border-[var(--turf-green)]/20">
+                                <Phone className="w-6 h-6 text-[var(--turf-green)]" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-white">Enter Your Phone Number</h3>
+                                <p className="text-sm text-gray-400">Required before proceeding to payment</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-gray-300">Mobile Number</label>
+                                <input
+                                    type="tel"
+                                    placeholder="+91 98765 43210"
+                                    value={phoneInput}
+                                    onChange={(e) => setPhoneInput(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !phoneSaving) handlePhoneSubmit(); }}
+                                    autoFocus
+                                    className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-base text-white placeholder:text-gray-600 focus:border-[var(--turf-green)]/50 focus:ring-2 focus:ring-[var(--turf-green)]/20 focus:outline-none transition-all"
+                                />
+                                <p className="text-xs text-gray-500">This will be saved to your profile for future bookings</p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => { setShowPhoneModal(false); setPendingBookingData(null); }}
+                                    className="flex-1 h-11 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 font-medium text-sm transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handlePhoneSubmit}
+                                    disabled={phoneSaving || !phoneInput.trim()}
+                                    className="flex-1 h-11 rounded-xl bg-[var(--turf-green)] hover:bg-[var(--turf-green)]/90 text-black font-bold text-sm transition-all shadow-[0_0_20px_rgba(46,204,113,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {phoneSaving ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                                    ) : (
+                                        'Continue to Payment'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Fullscreen Lightbox ── */}
             {lightboxOpen && (
