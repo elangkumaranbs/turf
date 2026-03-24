@@ -1,5 +1,24 @@
 import { Navbar } from '@/components/Navbar';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Contact Us – TurfGameDen | Cricket Turf Booking Support',
+    description:
+        'Reach out to TurfGameDen for booking support, turf partnership enquiries, or general questions. Email: turfgameden@gmail.com | Phone: +91 9025516930. Based in Gobichettipalayam, Tamil Nadu.',
+    keywords: [
+        'contact TurfGameDen', 'turf booking support', 'TurfGameDen email',
+        'cricket turf help', 'turf booking contact', 'gobichettipalayam turf contact',
+        'Elangkumaran BS contact', 'elangkumaranbs',
+    ],
+    alternates: { canonical: '/contact' },
+    openGraph: {
+        title: 'Contact TurfGameDen – Booking Support & Partnership Enquiries',
+        description: 'Need help with your booking or want to list your turf? Contact TurfGameDen at turfgameden@gmail.com or call +91 9025516930.',
+        url: '/contact',
+        type: 'website',
+    },
+};
 
 export default function ContactPage() {
     return (

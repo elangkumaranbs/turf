@@ -1,20 +1,30 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "Browse Premium Cricket Turfs – Book Instantly in Gobi, Sathy & Tamil Nadu",
+    title: 'Book Cricket Turfs in Gobi, Sathy & Tamil Nadu | TurfGameDen',
     description:
-        "Explore and book the best cricket turfs near you. TurfGameDen lists verified turfs in Gobi, Sathy, Erode, Tiruppur & across Tamil Nadu with real-time availability, pricing, and instant slot booking.",
+        "Browse and book premium cricket turfs in Gobi (Gobichettipalayam), Sathyamangalam, Erode & Tiruppur. Real-time slot availability, verified grounds, instant booking. Tamil Nadu's #1 turf platform by Elangkumaran BS.",
     keywords: [
-        "book cricket turf", "turf near me", "cricket ground near me",
-        "turf listing Gobi", "turf listing Sathy", "turf listing Erode",
-        "affordable turf booking", "night cricket turf", "floodlit turf booking",
-        "premium turf Tamil Nadu", "TurfStar Gobi", "box cricket near me",
+        'turf booking', 'cricket turf booking', 'book cricket turf online',
+        'turf booking Gobi', 'cricket turf Gobi', 'turf booking Sathy',
+        'turf booking Erode', 'turf booking Tiruppur', 'turf booking Tamil Nadu',
+        'best cricket turf Tamil Nadu', 'turf near me', 'cricket ground near me',
+        'premium cricket turf', 'night cricket turf', 'TurfGameDen turfs',
+        'Elangkumaran BS', 'elangkumaranbs',
     ],
-    alternates: { canonical: "/turfs" },
+    alternates: { canonical: '/turfs' },
     openGraph: {
-        title: "Explore & Book Premium Cricket Turfs | TurfGameDen",
-        description: "Find the best turf near you in Gobi, Sathy, Erode & Tiruppur. Book instantly with real-time slot availability.",
-        url: "/turfs",
+        title: 'Book Cricket Turfs Online – Gobi, Sathy & Tamil Nadu | TurfGameDen',
+        description:
+            "Find and book cricket turfs in Gobi, Sathyamangalam, Erode & Tiruppur. Real-time slots, verified grounds, instant confirmation on Tamil Nadu's #1 platform.",
+        url: '/turfs',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Book Cricket Turfs Online | TurfGameDen',
+        description:
+            'Premium cricket turfs across Tamil Nadu. Instant booking, verified grounds, real-time availability.',
     },
 };
 

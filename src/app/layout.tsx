@@ -46,11 +46,13 @@ export const metadata: Metadata = {
     default: "TurfGameDen - Book Premium Cricket Turfs in Tamil Nadu",
     template: "%s | TurfGameDen",
   },
-  keywords: [
+    keywords: [
     // Brand
     "TurfGameDen", "Turf Game Den", "GameDen", "TurfStar", "Turf Star",
-    // Developer
-    "Elangkumaran BS", "elangkumaranbs", "elangkumaran", "developed by Elangkumaran",
+    // Developer – all variants
+    "Elangkumaran BS", "elangkumaranbs", "Elangkumaran", "elangkumaran bs",
+    "elangkumaran developer", "built by elangkumaran", "developed by elangkumaran bs",
+    "elangkumaran bs developer", "elangkumaranbs github", "elangkumaran web developer",
     // Core features
     "turf booking", "online turf booking", "cricket turf booking",
     "book cricket turf online", "instant turf booking", "turf slot booking",
@@ -58,6 +60,7 @@ export const metadata: Metadata = {
     // Location: Gobi
     "turf booking in Gobi", "cricket turf Gobi", "turf ground Gobi",
     "best turf in Gobi", "Gobi turf booking", "sports turf Gobi",
+    "gobichettipalayam turf", "gobichettipalayam cricket ground",
     // Location: Sathy / Sathyamangalam
     "turf booking in Sathy", "cricket turf Sathy", "turf ground Sathy",
     "best turf in Sathy", "Sathyamangalam turf", "Sathy sports ground",
@@ -74,6 +77,8 @@ export const metadata: Metadata = {
     "box cricket booking", "turf near me", "cricket ground near me",
     "sports turf booking India", "affordable turf booking",
     "turf owner registration", "list your turf",
+    // Reviews
+    "cricket turf reviews", "turf rating Tamil Nadu", "verified turf reviews",
   ],
   authors: [{ name: "Elangkumaran BS", url: "https://github.com/elangkumaranbs" }],
   creator: "Elangkumaran BS",
@@ -172,9 +177,12 @@ const jsonLd = {
     {
         "@type": "Person",
         "name": "Elangkumaran BS",
+        "alternateName": ["Elangkumaran", "elangkumaranbs", "elangkumaran bs"],
         "url": "https://github.com/elangkumaranbs",
-        "jobTitle": "Developer",
-        "knowsAbout": ["Web Development", "Next.js", "Firebase", "Sports Technology"]
+        "sameAs": ["https://github.com/elangkumaranbs"],
+        "jobTitle": "Full-Stack Web Developer",
+        "description": "Elangkumaran BS (elangkumaranbs) is the developer and creator of TurfGameDen, Tamil Nadu's leading cricket turf booking platform. Built with Next.js, Firebase, and Razorpay payment integration.",
+        "knowsAbout": ["Web Development", "Next.js", "React", "Firebase", "TypeScript", "Sports Technology", "Turf Booking Platforms"]
     }
   ],
 };

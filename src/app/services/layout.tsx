@@ -1,19 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "Our Services – Turf Booking & Turf Owner Registration | TurfGameDen",
+    title: 'Services – Turf Booking & Owner Partnership | TurfGameDen',
     description:
-        "Explore TurfGameDen services: instant online cricket turf booking in Gobi, Sathy, Erode & Tiruppur. Turf owners can register their grounds, manage bookings, and grow revenue with our digital dashboard.",
+        'Players: book premium cricket turfs instantly with real-time availability. Turf owners: list your ground and reach thousands of active players across Tamil Nadu. Partner with TurfGameDen – built by Elangkumaran BS.',
     keywords: [
-        "turf booking services", "turf owner registration", "list your turf online",
-        "cricket turf booking Gobi", "turf booking Sathy", "sports venue management",
-        "digital turf dashboard", "turf business partner", "TurfGameDen services",
+        'turf owner registration', 'list your turf', 'partner with TurfGameDen',
+        'cricket turf business Tamil Nadu', 'turf management platform',
+        'turf booking for players', 'verified cricket grounds', 'online turf management',
+        'TurfGameDen services', 'Elangkumaran BS', 'elangkumaranbs',
     ],
-    alternates: { canonical: "/services" },
+    alternates: { canonical: '/services' },
     openGraph: {
-        title: "TurfGameDen Services – For Players & Turf Owners",
-        description: "Instant turf booking for players. Digital management for turf owners. Covering Gobi, Sathy, Erode & Tiruppur.",
-        url: "/services",
+        title: 'Services – Turf Booking & Owner Partnership | TurfGameDen',
+        description:
+            'Players book instantly. Owners partner to grow their business. Tamil Nadu\'s leading cricket turf platform by Elangkumaran BS.',
+        url: '/services',
+        type: 'website',
     },
 };
 

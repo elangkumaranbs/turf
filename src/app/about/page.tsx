@@ -1,7 +1,20 @@
 import { Navbar } from "@/components/Navbar";
-import { ShieldCheck, Target, Users, MapPin } from "lucide-react";
+import { ShieldCheck, Target, Users, MapPin, Code2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Metadata } from "next";
+
+const developerJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Elangkumaran BS",
+    "alternateName": ["Elangkumaran", "elangkumaranbs", "elangkumaran bs"],
+    "url": "https://github.com/elangkumaranbs",
+    "sameAs": ["https://github.com/elangkumaranbs"],
+    "jobTitle": "Full-Stack Web Developer",
+    "description": "Elangkumaran BS (elangkumaranbs) is a full-stack web developer and the creator of TurfGameDen – Tamil Nadu's #1 online cricket turf booking platform. He built the platform using Next.js, Firebase, TypeScript, and Razorpay.",
+    "knowsAbout": ["Web Development", "Next.js", "React", "Firebase", "TypeScript", "Sports Technology"]
+};
 
 export const metadata: Metadata = {
     title: "About TurfGameDen – Premium Turf Booking Platform in Tamil Nadu",
@@ -60,7 +73,7 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Core Values Section */}
+        {/* Core Values Section */}
             <section className="container mx-auto px-6 py-20">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl font-bold text-white mb-4">Our Core Values</h2>
@@ -85,6 +98,46 @@ export default function AboutPage() {
                             </div>
                         )
                     })}
+                </div>
+            </section>
+
+            {/* Developer Section */}
+            <section className="container mx-auto px-6 py-20 border-t border-white/5">
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(developerJsonLd) }}
+                />
+                <div className="max-w-3xl mx-auto text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold text-sm mb-8 tracking-wide uppercase">
+                        <Code2 className="w-4 h-4" /> Meet the Developer
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-4">
+                        Built by{" "}
+                        <Link
+                            href="https://github.com/elangkumaranbs"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 hover:underline"
+                        >
+                            Elangkumaran BS
+                        </Link>
+                    </h2>
+                    <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                        <strong className="text-white">Elangkumaran BS</strong> (also known as{" "}
+                        <span className="text-[var(--turf-green)] font-semibold">elangkumaranbs</span> and{" "}
+                        <span className="text-[var(--turf-green)] font-semibold">elangkumaran</span>) is a full-stack
+                        web developer from Gobichettipalayam, Tamil Nadu. He designed and built TurfGameDen to
+                        modernize how cricket players book turfs across Tamil Nadu – making it instant, reliable, and
+                        accessible to everyone.
+                    </p>
+                    <Link
+                        href="https://github.com/elangkumaranbs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 hover:border-white/20 transition-all text-sm"
+                    >
+                        <Code2 className="w-4 h-4" /> @elangkumaranbs on GitHub
+                    </Link>
                 </div>
             </section>
         </main>

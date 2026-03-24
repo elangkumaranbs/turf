@@ -1,12 +1,48 @@
 # TurfGameDen
 
-TurfGameDen is Tamil Nadu's premium online turf booking platform. It allows users to book cricket turfs in cities like Gobi, Sathy, Erode, and Tiruppur. 
+> Tamil Nadu's #1 online cricket turf booking platform
 
-## Key Features
-- Instant turf slot booking
-- Verified cricket grounds with floodlights
-- Easy cancellations and refunds
+TurfGameDen (https://turfgameden.com) is a premium sports technology platform that lets players discover, browse, and instantly book cricket turfs across Tamil Nadu, India. Turf owners can list and manage their grounds through a dedicated dashboard.
 
 ## Developer
-Developed by Elangkumaran BS.
+
+Built by **Elangkumaran BS** (also known as elangkumaranbs / elangkumaran).
 GitHub: https://github.com/elangkumaranbs
+
+## Key Features
+
+- Real-time slot availability for cricket turfs
+- Instant online booking with Razorpay payment integration
+- Verified, floodlit cricket grounds (night play available)
+- Distance-aware turf discovery ("Nearest First" sorting)
+- Player reviews and star ratings for every turf
+- Turf owner management dashboard (bookings, slots, analytics)
+- Push notifications (FCM) for booking confirmations
+- Progressive Web App (PWA) with offline support
+
+## Service Area
+
+- Gobi (Gobichettipalayam), Tamil Nadu
+- Sathy (Sathyamangalam), Tamil Nadu
+- Erode, Tamil Nadu
+- Tiruppur, Tamil Nadu
+- Expanding across Tamil Nadu
+
+## Tech Stack
+
+Next.js 14, TypeScript, Firebase Firestore, Firebase Auth, Firebase Cloud Messaging, Cloudinary, Razorpay, EmailJS.
+
+## Pages
+
+- / - Home page with hero, features, and CTA
+- /turfs - Browse all cricket turfs with search, filter, and sort
+- /turfs/{id} - Individual turf detail with booking, gallery, and player reviews
+- /about - About TurfGameDen and its mission
+- /services - Services for players and turf owners (partner registration)
+- /contact - Contact information for support
+
+## Contact
+
+Email: turfgameden@gmail.com
+Phone: +91 9025516930
+Address: Gobichettipalayam 638452, Tamil Nadu, India

@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { getTurfs } from '@/lib/firebase/firestore';
 
 const SITE_URL = 'https://turfgameden.com';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const staticRoutes: MetadataRoute.Sitemap = [
         {
             url: SITE_URL,
@@ -21,6 +22,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.8,
+        },
+        {
+            url: `${SITE_URL}/contact`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.7,
         },
         {
             url: `${SITE_URL}/turfs`,
@@ -42,5 +49,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
     ];
 
-    return staticRoutes;
+    try {
+        const turfs = await getTurfs();
+        const turfRoutes: MetadataRoute.Sitemap = turfs.map((turf) => {
+            const lastModDate = turf.createdAt ? new Date(turf.createdAt) : new Date();
+            return {
+                url: `${SITE_URL}/turfs/${turf.id}`,
+                lastModified: lastModDate,
+                changeFrequency: 'weekly',
+                priority: 0.7,
+            };
+        });
+
+        return [...staticRoutes, ...turfRoutes];
+    } catch (error) {
+        console.error('Error fetching turfs for sitemap:', error);
+        return staticRoutes;
+    }
 }

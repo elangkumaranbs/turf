@@ -7,6 +7,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { getTurfById, getUserById, Turf } from '@/lib/firebase/firestore';
 import { MapPin, CheckCircle, ChevronLeft, ChevronRight, X, ZoomIn, Images, Navigation2, Star } from 'lucide-react';
 import Image from 'next/image';
+import cloudinaryLoader from '@/lib/cloudinaryLoader';
 import { haversineDistance, formatDistance } from '@/lib/geocoding';
 import { createBooking, createPendingOrder, deletePendingOrder } from '@/lib/firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
@@ -261,6 +262,7 @@ export default function TurfDetailsPage() {
                             onClick={() => setLightboxOpen(true)}
                         >
                             <Image
+                                loader={cloudinaryLoader}
                                 src={images[selectedImage]}
                                 alt={turf.name}
                                 fill
@@ -313,7 +315,7 @@ export default function TurfDetailsPage() {
                                                 ? 'w-24 h-24 sm:w-28 sm:h-28 border-[var(--turf-green)] shadow-[0_0_20px_rgba(46,204,113,0.4)] scale-105'
                                                 : 'w-20 h-20 sm:w-24 sm:h-24 border-white/10 opacity-50 hover:opacity-100 hover:border-white/30 hover:scale-102'}`}
                                     >
-                                        <Image src={img} alt={`Photo ${idx + 1}`} fill className="object-cover" />
+                                        <Image loader={cloudinaryLoader} src={img} alt={`Photo ${idx + 1}`} fill className="object-cover" />
                                         {selectedImage === idx && (
                                             <div className="absolute inset-0 ring-2 ring-inset ring-[var(--turf-green)]/50 rounded-2xl" />
                                         )}
@@ -456,6 +458,7 @@ export default function TurfDetailsPage() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <Image
+                            loader={cloudinaryLoader}
                             src={images[selectedImage]}
                             alt={`${turf.name} - Photo ${selectedImage + 1}`}
                             fill
@@ -483,7 +486,7 @@ export default function TurfDetailsPage() {
                                     onClick={(e) => { e.stopPropagation(); setSelectedImage(idx); }}
                                     className={`relative flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-[var(--turf-green)] scale-110 shadow-[0_0_10px_rgba(46,204,113,0.5)]' : 'border-white/20 opacity-50 hover:opacity-100'}`}
                                 >
-                                    <Image src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" />
+                                    <Image loader={cloudinaryLoader} src={img} alt={`Thumb ${idx + 1}`} fill className="object-cover" />
                                 </button>
                             ))}
                         </div>
