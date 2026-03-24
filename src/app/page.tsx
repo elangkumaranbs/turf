@@ -1,12 +1,47 @@
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
-import { CalendarCheck, MapPin, Star, ShieldCheck, Zap, Users, ArrowRight, Mail, Phone, Instagram, Twitter, Facebook } from "lucide-react";
+import { CalendarCheck, MapPin, Star, ShieldCheck, Zap, Users, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Home() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I book a cricket turf on TurfGameDen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Booking is simple: Browse our listed turfs, select your preferred date and time slot, and complete the instant payment via Razorpay. Your booking is confirmed immediately."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are the turfs on your platform verified?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, every turf listed on TurfGameDen is personally verified by our team to ensure high-quality infrastructure, professional lighting, and safety."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What locations do you cover in Tamil Nadu?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We currently offer premium cricket turf bookings in Gobi (Gobichettipalayam), Sathy (Sathyamangalam), Erode, and Tiruppur, with more locations being added regularly."
+        }
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <Navbar />
       <Hero />
 
@@ -15,15 +50,15 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[var(--turf-green)]/5 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
         
         <div className="relative z-10 animate-fade-up">
-            <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 font-[family-name:var(--font-outfit)] tracking-tight">Why Choose Turf<span className="text-[var(--turf-green)]">GameDen</span>?</h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-20 font-[family-name:var(--font-jakarta)]">We provide the best infrastructure, seamless booking, and a community-driven approach to turf games.</p>
+            <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-6 font-[family-name:var(--font-outfit)] tracking-tight">Best Cricket Turfs in <span className="text-[var(--turf-green)]">Tamil Nadu</span></h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-20 font-[family-name:var(--font-jakarta)]">Choose TurfGameDen for the best infrastructure, seamless booking, and high-quality cricket pitches in Gobi and Sathy.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
           {[
-            { title: 'Premium Facilities', icon: Star, desc: 'Experience well-maintained pitches with high-quality turf and professional lighting for night matches.' },
-            { title: 'Instant Booking', icon: Zap, desc: 'Skip the wait. Find available slots in real-time and secure your game with instant confirmation.' },
-            { title: 'Verified Owners', icon: ShieldCheck, desc: 'Every turf on our platform is personally verified by our team to guarantee safety and quality.' }
+            { title: 'Premium Cricket Facilities', icon: Star, desc: 'Experience well-maintained pitches with high-quality turf and professional lighting for night matches in Tamil Nadu.' },
+            { title: 'Real-time Slot Booking', icon: Zap, desc: 'Find available cricket slots in real-time and secure your match instantly with our seamless platform.' },
+            { title: 'Personally Verified Grounds', icon: ShieldCheck, desc: 'Every turf is verified by TurfGameDen to guarantee the best playing experience and safety for all teams.' }
           ].map((feature, i) => {
             const Icon = feature.icon;
             return (
@@ -46,15 +81,15 @@ export default function Home() {
             <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
                 <div className="flex-1 space-y-10 animate-fade-up">
                     <div className="inline-block px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-semibold text-sm shadow-[0_0_15px_rgba(59,130,246,0.2)] font-[family-name:var(--font-outfit)] tracking-wide uppercase">
-                        Seamless Process
+                        Book Your Slot Today
                     </div>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-[family-name:var(--font-outfit)] tracking-tight">Book your game in <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">3 simple steps</span></h2>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight font-[family-name:var(--font-outfit)] tracking-tight">Experience Premium <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">Cricket Turf Booking</span></h2>
                     
                     <div className="space-y-10">
                         {[
-                            { step: '01', title: 'Discover Turfs', desc: 'Browse through our curated list of premium turfs near you.', icon: MapPin, color: 'from-blue-500/20 to-transparent', border: 'border-blue-500/30' },
-                            { step: '02', title: 'Select Your Slot', desc: 'Pick a date and time that works best for your team.', icon: CalendarCheck, color: 'from-teal-500/20 to-transparent', border: 'border-teal-500/30' },
-                            { step: '03', title: 'Play & Enjoy', desc: 'Show up at the venue and experience the thrill of the game.', icon: Users, color: 'from-emerald-500/20 to-transparent', border: 'border-emerald-500/30' },
+                            { step: '01', title: 'Find Nearby Turfs', desc: 'Browse through our curated list of premium cricket grounds in Gobi, Sathy, and Erode.', icon: MapPin, color: 'from-blue-500/20 to-transparent', border: 'border-blue-500/30' },
+                            { step: '02', title: 'Pick a Time Slot', desc: 'Select a highly maintained pitch and slot that works best for your team.', icon: CalendarCheck, color: 'from-teal-500/20 to-transparent', border: 'border-teal-500/30' },
+                            { step: '03', title: 'Play Professional Game', desc: 'Arrive at the venue and experience professional-grade cricket infrastructure.', icon: Users, color: 'from-emerald-500/20 to-transparent', border: 'border-emerald-500/30' },
                         ].map((item, i) => {
                             const Icon = item.icon;
                             return (
@@ -81,7 +116,7 @@ export default function Home() {
                      <div className="aspect-[4/5] rounded-[2.5rem] overflow-hidden relative shadow-2xl shadow-emerald-500/20 border border-white/10">
                         <Image
                             src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?q=80&w=1000&auto=format&fit=crop"
-                            alt="Players on turf"
+                            alt="Book the best cricket turfs in Tamil Nadu"
                             fill
                             className="object-cover"
                         />
@@ -110,13 +145,13 @@ export default function Home() {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--turf-green)]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" style={{ animationDelay: '1s' }} />
             
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 relative z-10 font-[family-name:var(--font-outfit)] tracking-tight">Own a Turf? <br className="sm:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Partner With Us.</span></h2>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 relative z-10 font-[family-name:var(--font-outfit)] tracking-tight">Own a Cricket Turf? <br className="sm:hidden" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--turf-green)] to-emerald-400">Partner With TurfGameDen</span></h2>
             <p className="text-xl md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 relative z-10 leading-relaxed font-[family-name:var(--font-jakarta)]">
-                Join our network of premium turfs and reach thousands of active players. Manage bookings, analytics, and revenue all in one sleek dashboard.
+                List your ground on Tamil Nadu's leading cricket booking platform. Reach thousands of players in Gobi, Sathy, and Erode.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
                 <Link href="/services#partner" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--turf-green)] to-emerald-500 text-black font-bold text-lg hover:shadow-[0_0_30px_rgba(46,204,113,0.4)] hover:scale-105 transition-all flex items-center justify-center gap-2 font-[family-name:var(--font-outfit)] tracking-wide">
-                    Become a Partner <ArrowRight size={22} />
+                    List Your Turf <ArrowRight size={22} />
                 </Link>
                 <Link href="/turfs" className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white/5 text-white font-bold text-lg border border-white/10 hover:bg-white/10 hover:scale-105 transition-all font-[family-name:var(--font-outfit)] tracking-wide">
                     Explore Turfs
@@ -124,8 +159,6 @@ export default function Home() {
             </div>
         </div>
       </section>
-
-
     </main>
   );
 }

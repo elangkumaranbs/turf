@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     // Brand
     "TurfGameDen", "Turf Game Den", "GameDen", "TurfStar", "Turf Star",
     // Developer
-    "Elangkumaran BS", "elangkumaranbs", "developed by Elangkumaran",
+    "Elangkumaran BS", "elangkumaranbs", "elangkumaran", "developed by Elangkumaran",
     // Core features
     "turf booking", "online turf booking", "cricket turf booking",
     "book cricket turf online", "instant turf booking", "turf slot booking",
@@ -141,6 +141,7 @@ const jsonLd = {
       url: SITE_URL,
       description: "Book premium cricket turfs online in Gobi, Sathy, Erode and across Tamil Nadu. Instant booking, verified grounds, floodlit pitches.",
       image: `${SITE_URL}/og-image.png`,
+      email: "turfgameden@gmail.com",
       address: {
         "@type": "PostalAddress",
         addressLocality: "Gobi",
@@ -158,9 +159,23 @@ const jsonLd = {
         { "@type": "City", name: "Erode" },
         { "@type": "City", name: "Tiruppur" },
       ],
-      sameAs: [],
+      sameAs: [
+          "https://github.com/elangkumaranbs"
+      ],
       priceRange: "₹₹",
+      contactPoint: {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "turfgameden@gmail.com"
+      }
     },
+    {
+        "@type": "Person",
+        "name": "Elangkumaran BS",
+        "url": "https://github.com/elangkumaranbs",
+        "jobTitle": "Developer",
+        "knowsAbout": ["Web Development", "Next.js", "Firebase", "Sports Technology"]
+    }
   ],
 };
 
@@ -172,18 +187,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3DMCN7C2Z8"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3DMCN7C2Z8');
-          `}
-        </Script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -197,6 +203,7 @@ export default function RootLayout({
             <Footer />
           </AuthProvider>
         </ThemeProvider>
+        <GoogleAnalytics gaId="G-3DMCN7C2Z8" />
       </body>
     </html>
   );
