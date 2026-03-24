@@ -19,6 +19,7 @@ const nextConfig = {
             },
         ],
     },
+    // Removed strict COOP headers to fix Firebase Auth popup warning
 };
 
 export default withPWA(nextConfig);

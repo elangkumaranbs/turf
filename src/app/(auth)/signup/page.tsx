@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -10,16 +10,24 @@ import { createUserWithEmailAndPassword, updateProfile, deleteUser, GoogleAuthPr
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { Navbar } from '@/components/Navbar';
-import { SUPER_ADMIN_EMAIL } from '@/context/AuthContext';
+import { useAuth, SUPER_ADMIN_EMAIL } from '@/context/AuthContext';
 
 export default function SignupPage() {
     const router = useRouter();
+    const { user, loading: authLoading } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Redirect to home after successful Google redirect sign-in
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.push('/');
+        }
+    }, [user, authLoading, router]);
 
     const getUserRole = (userEmail: string) => {
         if (userEmail === SUPER_ADMIN_EMAIL) return 'super_admin';
@@ -59,13 +67,9 @@ export default function SignupPage() {
         setError('');
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            await checkAndCreateUser(user);
-            router.push('/');
+            await signInWithPopup(auth, provider);
         } catch (err: any) {
             handleAuthError(err);
-        } finally {
             setLoading(false);
         }
     };

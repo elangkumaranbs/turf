@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,14 +11,23 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { Navbar } from '@/components/Navbar';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { user, loading: authLoading } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Redirect to home after successful Google redirect sign-in
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.push('/');
+        }
+    }, [user, authLoading, router]);
 
     const checkAndCreateUser = async (user: any) => {
         try {
@@ -84,13 +93,9 @@ export default function LoginPage() {
         setError('');
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            await checkAndCreateUser(user);
-            router.push('/');
+            await signInWithPopup(auth, provider);
         } catch (err: any) {
             handleAuthError(err);
-        } finally {
             setLoading(false);
         }
     };

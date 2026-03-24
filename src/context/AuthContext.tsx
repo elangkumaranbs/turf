@@ -39,11 +39,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     const userDocRef = doc(db, 'users', firebaseUser.uid);
                     const userDoc = await getDoc(userDocRef);
 
-                    // Guard: If Firestore doc was deleted by admin, sign out the ghost user
+                    // Auto-create Firestore doc if missing (e.g. new Google sign-in)
                     if (!userDoc.exists() && firebaseUser.email !== SUPER_ADMIN_EMAIL) {
-                        console.warn('User Firestore doc not found — account was deleted. Signing out.');
-                        await auth.signOut();
-                        setUser(null);
+                        const newRole = 'user';
+                        await setDoc(userDocRef, {
+                            uid: firebaseUser.uid,
+                            name: firebaseUser.displayName || 'User',
+                            email: firebaseUser.email || '',
+                            role: newRole,
+                            createdAt: new Date().toISOString()
+                        });
+                        setUser({
+                            uid: firebaseUser.uid,
+                            email: firebaseUser.email,
+                            displayName: firebaseUser.displayName,
+                            photoURL: firebaseUser.photoURL,
+                            role: newRole
+                        });
                         setLoading(false);
                         return;
                     }
