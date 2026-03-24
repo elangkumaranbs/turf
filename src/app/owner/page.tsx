@@ -113,7 +113,7 @@ export default function OwnerDashboardPage() {
     const todayBookings = bookings.filter(b => {
         const bookingDate = new Date(b.date);
         bookingDate.setHours(0, 0, 0, 0);
-        return bookingDate.getTime() === today.getTime();
+        return bookingDate.getTime() === today.getTime() && b.status !== 'cancelled';
     }).length;
 
     const statCards = [

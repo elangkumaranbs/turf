@@ -177,7 +177,7 @@ export default function DashboardPage() {
         if (!booking.id) return;
 
         const confirmMsg = booking.paymentId
-            ? `Cancel booking at ${booking.turfName}?\n\nA full refund of ₹${((booking.amountPaid || 0) / 100).toLocaleString('en-IN')} will be processed to your original payment method.\n\nThis action cannot be undone.`
+            ? `Cancel booking at ${booking.turfName}?\n\nA full refund of ₹${(booking.amountPaid || 0).toLocaleString('en-IN')} will be processed to your original payment method.\n\nThis action cannot be undone.`
             : `Cancel booking at ${booking.turfName}?\n\nThis action cannot be undone.`;
 
         if (!window.confirm(confirmMsg)) return;
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                         body: JSON.stringify({
                             targetUserId: user!.uid,
                             title: 'Refund Initiated 💸',
-                            body: `Your booking was cancelled. A refund of ₹${((booking.amountPaid || 0) / 100).toLocaleString('en-IN')} is making its way back to your bank account.`
+                            body: `Your booking was cancelled. A refund of ₹${(booking.amountPaid || 0).toLocaleString('en-IN')} is making its way back to your bank account.`
                         })
                     }).catch(err => console.error('Failed to trigger refund notification:', err));
                 } catch (pushErr) {

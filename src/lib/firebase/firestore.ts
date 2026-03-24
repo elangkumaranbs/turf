@@ -497,7 +497,8 @@ export const getOwnerStats = async (ownerId: string): Promise<OwnerStats> => {
                 const bookingsCol = collection(db, 'bookings');
                 const q = query(bookingsCol, where("turfId", "in", chunk));
                 const snapshot = await getDocs(q);
-                totalBookings += snapshot.size;
+                const activeBookings = snapshot.docs.filter(d => d.data().status !== 'cancelled');
+                totalBookings += activeBookings.length;
             }
         }
 
@@ -786,8 +787,8 @@ export const getSuperAdminStats = async (): Promise<AdminStatistics[]> => {
             let totalAdminEarnings = 0;
 
             for (const turf of adminTurfs) {
-                // Count all bookings for this turf (not just confirmed)
-                const turfBookings = allBookings.filter(b => b.turfId === turf.id);
+                // Count only non-cancelled bookings for this turf
+                const turfBookings = allBookings.filter(b => b.turfId === turf.id && b.status !== 'cancelled');
                 const turfBookingCount = turfBookings.length;
 
                 // Calculate earnings from confirmed bookings only

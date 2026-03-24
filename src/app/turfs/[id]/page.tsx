@@ -214,7 +214,7 @@ export default function TurfDetailsPage() {
                                         body: JSON.stringify({
                                             targetUserId: turf.adminId, // Owner
                                             title: "New Booking Received! 💰",
-                                            body: `[${user.displayName || 'A Player'}] just paid ₹${(totalAmount / 100).toLocaleString('en-IN')} for ${turf.name}.`
+                                            body: `[${user.displayName || 'A Player'}] just paid ₹${totalAmount.toLocaleString('en-IN')} for ${turf.name}.`
                                         })
                                     }).catch(err => console.error('Failed to trigger owner push notification:', err));
                                 }

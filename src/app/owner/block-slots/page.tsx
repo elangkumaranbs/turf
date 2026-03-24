@@ -509,7 +509,7 @@ export default function BlockSlotsPage() {
                                                 <span className="text-[10px] font-bold text-blue-400 bg-blue-500/15 border border-blue-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                     <CreditCard size={10} /> Online
                                                     {block.amountPaid != null && (
-                                                        <span className="ml-0.5">₹{(block.amountPaid / 100).toLocaleString('en-IN')}</span>
+                                                        <span className="ml-0.5">₹{block.amountPaid.toLocaleString('en-IN')}</span>
                                                     )}
                                                 </span>
                                             ) : (
